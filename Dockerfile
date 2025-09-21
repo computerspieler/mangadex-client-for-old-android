@@ -13,5 +13,5 @@ ENV PREFIX /opt/ndk/apps/prj/project/jni/openssl
 
 ENTRYPOINT ["/bin/bash", "-c"]
 
-#./Configure android-arm --prefix=$PREFIX
+#./Configure --prefix=$PREFIX no-threads no-autoload-config no-tests no-jitter no-seed no-idea no-bf no-cast no-md2 android-arm --debug -march=armv4t
 #docker run -v ".:/opt/ndk/apps/prj" -i -t android-1.6-ssl

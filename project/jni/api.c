@@ -17,19 +17,16 @@
 
 #define LOG_TAG "MangaDexJNI"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 static char *BUFFER;
 static int INTERNAL_BUFFER_SIZE;
 
 void init_api(void) {
-    LOGI("SSL_library_init\n");
 	SSL_library_init();
-    LOGI("SSL_load_error_strings\n");
 	SSL_load_error_strings();
-    LOGI("OpenSSL_add_all_algorithms\n");
 	OpenSSL_add_all_algorithms();
 
-    LOGI("Done\n");
     BUFFER = NULL;
     INTERNAL_BUFFER_SIZE = 0;
 }
@@ -65,18 +62,14 @@ int createContext(Context *ctx) {
 	SSL* ssl;
     const SSL_METHOD *method;
 
-    LOGI("TLS_client_method\n");
     method = TLS_client_method();
-    LOGI("meth: %p\n", method);
 
-	LOGI("SSL_CTX_new\n");
 	ctx->ctx = SSL_CTX_new(method);
 	if (!ctx->ctx) {
 		ERR_print_errors_fp(stderr);
 		return 1;
 	}
 
-	LOGI("BIO_new_ssl_connect\n");
 	ctx->bio = BIO_new_ssl_connect(ctx->ctx);
 	if (!ctx->bio) {
         ERR_print_errors_fp(stderr);
@@ -84,18 +77,15 @@ int createContext(Context *ctx) {
         return 1;
     }
 
-	LOGI("BIO_set_conn_hostname\n");
 	BIO_set_conn_hostname(ctx->bio, DEFAULT_DOMAIN_NAME ":" HTTPS_PORT);
 
-	LOGI("BIO_get_ssl\n");
 	BIO_get_ssl(ctx->bio, &ssl);
 	if(!ssl) {
-		fprintf(stderr, "Can't get SSL pointer\n");
+		LOGE("Can't get SSL pointer\n");
         freeContext(ctx);
         return 1;
 	}
 
-	LOGI("SSL_set_tlsext_host_name\n");
 	if (!SSL_set_tlsext_host_name(ssl, DEFAULT_DOMAIN_NAME)) {
         ERR_print_errors_fp(stderr);
         SSL_free(ssl);
@@ -103,23 +93,20 @@ int createContext(Context *ctx) {
         return 1;
     }
 
-	LOGI("BIO_do_connect\n");
 	if(BIO_do_connect(ctx->bio) <= 0) {
 		ERR_print_errors_fp(stderr);
 		return 1;
 	}
 
-	LOGI("BIO_do_handshake\n");
 	if (BIO_do_handshake(ctx->bio) <= 0) {
         ERR_print_errors_fp(stderr);
         freeContext(ctx);
         return 1;
     }
 
-	LOGI("BIO_should_read\n");
     BIO_should_read(ctx->bio);
 
-	printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
+	LOGI("Connected with %s encryption\n", SSL_get_cipher(ssl));
 
 	return 0;
 }
@@ -145,7 +132,7 @@ static int run_request(Context *ctx, const char* request, int request_length) {
 
     buffer[bytes] = 0;
     if(strncmp(buffer, "HTTP/1.1 200 OK", strlen("HTTP/1.1 200 OK")) != 0) {
-        printf("Invalid response\n");
+        LOGE("Invalid response\n");
         error_code = -5;
         sscanf(buffer, "HTTP/1.1 %d", &error_code);
         return error_code;
