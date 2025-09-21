@@ -157,6 +157,7 @@ static int run_request(Context *ctx, const char* request, int request_length) {
         sscanf(body_start, "%X\r\n", &output_size);
     }
     
+    LOGI("Length: %d", output_size);
     if(*body_start != '{') {
         body_start = strstr(body_start, "\r\n");
         if(!body_start)
@@ -179,7 +180,7 @@ static int run_request(Context *ctx, const char* request, int request_length) {
     // Consume the rest
     while ((bytes = BIO_read(ctx->bio, buffer, BUFFER_SIZE)) > 0);
 
-    return 200;
+    return output_size;
 }
 
 #define BUILD_GET_REQUEST(domain, path) (    \

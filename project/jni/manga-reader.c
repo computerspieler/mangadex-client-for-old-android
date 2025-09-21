@@ -44,3 +44,27 @@ Java_fr_speilkoun_mangareader_OpenSSL_getChapterImages(
 
     return (*env)->NewStringUTF(env, getResponseBody());
 }
+
+JNIEXPORT jstring
+Java_fr_speilkoun_mangareader_OpenSSL_getChapters(
+    JNIEnv* env,
+    jclass cls,
+    jstring id,
+	jint offset
+)
+{
+	Context ctx;
+	int code;
+
+	createContext(&ctx);
+
+    code = getChapters(&ctx, (*env)->GetStringUTFChars(env, id, 0), offset);
+	if(code < 0)
+		LOGI("%d\n", code);
+	else
+		LOGI("%.*s\n", code, getResponseBody());
+
+	freeContext(&ctx);
+
+    return (*env)->NewStringUTF(env, getResponseBody());
+}

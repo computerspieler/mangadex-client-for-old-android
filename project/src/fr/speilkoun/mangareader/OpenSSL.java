@@ -2,6 +2,7 @@ package fr.speilkoun.mangareader;
 
 public class OpenSSL {
 	public static native void init();
+	public static native String getChapters(String id, int offset);
 	public static native String getChapterImages(String id);
 	
 	static {
