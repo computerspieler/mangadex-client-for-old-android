@@ -12,6 +12,7 @@ static int initialized = 0;
 JNIEXPORT void Java_fr_speilkoun_OpenSSL_init(JNIEnv* env, jclass *cls)
 {
 	init_api();
+  
     initialized = 1;
 }
 
@@ -31,19 +32,15 @@ Java_fr_speilkoun_OpenSSL_getChapterImages(
 	Context ctx;
 	int code;
 
-    LOGI("In JNI\n");
 	createContext(&ctx);
 
-	LOGI("Context done\n");
-/*
     code = getChapterImages(&ctx, (*env)->GetStringUTFChars(env, id, 0));
 	if(code != 200)
-		printf("%d\n", code);
+		LOGI("%d\n", code);
 	else
-		printf("%s\n", getResponseBody());
-*/
-	freeContext(&ctx);
-    LOGI("Context freed\n");
+		LOGI("%s\n", getResponseBody());
 
-    return (*env)->NewStringUTF(env, "Hello");
+	freeContext(&ctx);
+
+    return (*env)->NewStringUTF(env, getResponseBody());
 }

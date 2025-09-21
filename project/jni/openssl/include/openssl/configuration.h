@@ -40,14 +40,20 @@ extern "C" {
 # ifndef OPENSSL_NO_ASAN
 #  define OPENSSL_NO_ASAN
 # endif
-# ifndef OPENSSL_NO_ASM
-#  define OPENSSL_NO_ASM
+# ifndef OPENSSL_NO_AUTOLOAD_CONFIG
+#  define OPENSSL_NO_AUTOLOAD_CONFIG
+# endif
+# ifndef OPENSSL_NO_BF
+#  define OPENSSL_NO_BF
 # endif
 # ifndef OPENSSL_NO_BROTLI
 #  define OPENSSL_NO_BROTLI
 # endif
 # ifndef OPENSSL_NO_BROTLI_DYNAMIC
 #  define OPENSSL_NO_BROTLI_DYNAMIC
+# endif
+# ifndef OPENSSL_NO_CAST
+#  define OPENSSL_NO_CAST
 # endif
 # ifndef OPENSSL_NO_CRYPTO_MDEBUG
 #  define OPENSSL_NO_CRYPTO_MDEBUG
@@ -94,6 +100,9 @@ extern "C" {
 # ifndef OPENSSL_NO_HQINTEROP
 #  define OPENSSL_NO_HQINTEROP
 # endif
+# ifndef OPENSSL_NO_IDEA
+#  define OPENSSL_NO_IDEA
+# endif
 # ifndef OPENSSL_NO_JITTER
 #  define OPENSSL_NO_JITTER
 # endif
@@ -115,6 +124,9 @@ extern "C" {
 # ifndef OPENSSL_NO_SCTP
 #  define OPENSSL_NO_SCTP
 # endif
+# ifndef OPENSSL_NO_SEED
+#  define OPENSSL_NO_SEED
+# endif
 # ifndef OPENSSL_NO_SSL3
 #  define OPENSSL_NO_SSL3
 # endif
@@ -123,6 +135,9 @@ extern "C" {
 # endif
 # ifndef OPENSSL_NO_SSLKEYLOG
 #  define OPENSSL_NO_SSLKEYLOG
+# endif
+# ifndef OPENSSL_NO_TESTS
+#  define OPENSSL_NO_TESTS
 # endif
 # ifndef OPENSSL_NO_TFO
 #  define OPENSSL_NO_TFO

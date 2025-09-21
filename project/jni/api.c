@@ -67,6 +67,7 @@ int createContext(Context *ctx) {
 
     LOGI("TLS_client_method\n");
     method = TLS_client_method();
+    LOGI("meth: %p\n", method);
 
 	LOGI("SSL_CTX_new\n");
 	ctx->ctx = SSL_CTX_new(method);
