@@ -1,4 +1,4 @@
-package fr.speilkoun;
+package fr.speilkoun.mangareader;
 
 public class OpenSSL {
 	public static native void init();

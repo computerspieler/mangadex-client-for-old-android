@@ -1,8 +1,9 @@
-package fr.speilkoun;
+package fr.speilkoun.mangareader;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+import fr.speilkoun.mangareader.R;
 
 import org.json.*;
 
@@ -12,7 +13,6 @@ public class MainActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		setContentView(R.layout.main);
 
 		Log.d("mangadex", "Starting");
 		OpenSSL.init();

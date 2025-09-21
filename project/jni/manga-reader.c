@@ -9,7 +9,7 @@
 
 static int initialized = 0;
 
-JNIEXPORT void Java_fr_speilkoun_OpenSSL_init(JNIEnv* env, jclass *cls)
+JNIEXPORT void Java_fr_speilkoun_mangareader_OpenSSL_init(JNIEnv* env, jclass *cls)
 {
 	init_api();
   
@@ -23,7 +23,7 @@ JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved)
 }
 
 JNIEXPORT jstring
-Java_fr_speilkoun_OpenSSL_getChapterImages(
+Java_fr_speilkoun_mangareader_OpenSSL_getChapterImages(
     JNIEnv* env,
     jclass cls,
     jstring id
