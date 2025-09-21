@@ -1,2 +1,2 @@
 APP_PROJECT_PATH := $(call my-dir)/project
-APP_MODULES      := manga-reader 
+APP_MODULES      := manga-reader
