@@ -1,5 +1,4 @@
 #include "api.h"
-#include "openssl/include/openssl/ssl.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -23,10 +22,6 @@ static char *BUFFER;
 static int INTERNAL_BUFFER_SIZE;
 
 void init_api(void) {
-	SSL_library_init();
-	SSL_load_error_strings();
-	OpenSSL_add_all_algorithms();
-
     BUFFER = NULL;
     INTERNAL_BUFFER_SIZE = 0;
 }
