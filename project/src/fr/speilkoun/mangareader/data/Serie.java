@@ -34,14 +34,13 @@ public class Serie {
         this.attribute = attribute;
     }
 
-    public static final String TITLE = "title";
-    public static final String STATUS = "status";
-
     public ContentValues getContentValues() {
         ContentValues output = new ContentValues(2);
 
-        output.put(TITLE, this.title);
-        output.put(STATUS, this.status.toString());
+        output.put("title", this.title);
+        output.put("status", this.status.toString());
+        output.put("source", this.source);
+        output.put("attribute", this.attribute);
 
         return output;
     }

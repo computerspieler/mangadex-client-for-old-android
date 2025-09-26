@@ -46,15 +46,15 @@ public class Provider extends ContentProvider {
                 "CREATE TABLE serie (" +
                     "id INTEGER PRIMARY KEY NOT NULL," +
                     "status TEXT CHECK(status IN ('FINISHED', 'RUNNING', 'UNKNOWN'))," +
-                    "title  TEXT" +
-                    "source  TEXT" +
-                    "attribute  TEXT" +
+                    "title TEXT," +
+                    "source TEXT," +
+                    "attribute TEXT" +
                 ");"
             );
             db.execSQL(
                 "CREATE TABLE chapter (" +
                     "id INTEGER PRIMARY KEY NOT NULL," +
-                    "serie_id   INTEGER ," +
+                    "serie_id INTEGER," +
 
                     "volume_id  INTEGER," +
                     "chapter_id INTEGER NOT NULL," +
@@ -161,7 +161,15 @@ public class Provider extends ContentProvider {
             builder.appendWhere("id = " + uri.getPathSegments().get(1));
         
         SQLiteDatabase db = mDBHelper.getReadableDatabase();
-        Cursor c = builder.query(db, projection, selection, selectionArgs, null, null, sortOrder);
+        Cursor c;
+
+        
+        c = builder.query(db,
+            projection,
+            selection, selectionArgs,
+            null, null,
+            sortOrder
+        );
 
         // Tell the cursor what uri to watch, so it knows when its source data changes
         c.setNotificationUri(getContext().getContentResolver(), uri);

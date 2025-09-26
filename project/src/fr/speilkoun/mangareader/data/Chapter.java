@@ -1,6 +1,6 @@
 package fr.speilkoun.mangareader.data;
 
-import java.util.Date;
+import android.text.format.Time;
 
 import android.content.ContentValues;
 
@@ -10,12 +10,12 @@ public class Chapter {
     public final Integer chapter_id;
     public final String publisher;
     public final String custom_attributes;
-    public final Date release_date;
+    public final Time release_date;
     
     public String title;
     public Integer volume_id;
 
-    Chapter(
+    public Chapter(
         Integer id,
         int serie_id,
         String title,
@@ -23,7 +23,7 @@ public class Chapter {
         String custom_attributes,
         Integer volume_id,
         Integer chapter_id,
-        Date release_date
+        Time release_date
     ) {
         this.id = id == null ? -1 : id;
         
@@ -44,7 +44,7 @@ public class Chapter {
     public static final String CHAPTER_ID = "chapter_id";
     public static final String RELEASE_DATE = "release_date";
 
-    ContentValues getContentValues() {
+    public ContentValues getContentValues() {
         ContentValues output = new ContentValues(7);
         
         output.put(SERIE_ID, this.serie_id);
@@ -54,7 +54,7 @@ public class Chapter {
         output.put(VOLUME_ID, this.volume_id);
         output.put(CHAPTER_ID, this.chapter_id);
         /* TODO: Change this for something parseable */
-        output.put(RELEASE_DATE, this.release_date.toString());
+        output.put(RELEASE_DATE, this.release_date.format3339(true));
 
         return output;
     }

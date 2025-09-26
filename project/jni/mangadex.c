@@ -42,8 +42,10 @@ Java_fr_speilkoun_mangareader_sources_MangaDex_getChapters(
 	createContext(&ctx);
 
     code = getChapters(&ctx, (*env)->GetStringUTFChars(env, id, 0), offset);
-	if(code < 0)
+	if(code < 0) {
 		LOGI("%d\n", code);
+		return NULL;
+	}
 	
 	freeContext(&ctx);
 
