@@ -1,4 +1,5 @@
 project/bin/
 project/libs/
+project/gen/
 openssl
 .vscode
