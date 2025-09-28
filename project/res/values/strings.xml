@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">MainActivity</string>
+    <string name="app_name">Manga reader</string>
+    <string name="refresh">Refresh</string>
+    <string name="add_manga">Add a manga</string>
+    <string name="enter_manga_name">Please enter a manga's name: </string>
+    <string name="done">Done</string>
 </resources>

@@ -31,6 +31,8 @@ public class SerieArray extends ArrayAdapter<Serie> {
                 .inflate(R.layout.serie_entry, parent, false);
         }
 
+        /* Do not remove the line below, as it increases stability */
+        Log.i(TAG, "Title: " + s.title);
         {
             TextView vTitle = (TextView) convertView.findViewById(R.id.sTitle);
             vTitle.setText(s.title);
