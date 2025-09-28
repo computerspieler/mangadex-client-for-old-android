@@ -51,3 +51,26 @@ Java_fr_speilkoun_mangareader_sources_MangaDex_getChapters(
 
     return (*env)->NewStringUTF(env, getResponseBody());
 }
+
+JNIEXPORT jstring
+Java_fr_speilkoun_mangareader_sources_MangaDex_getInfos(
+    JNIEnv* env,
+    jclass cls,
+    jstring id
+)
+{
+	Context ctx;
+	int code;
+
+	createContext(&ctx);
+
+    code = getInfo(&ctx, (*env)->GetStringUTFChars(env, id, 0));
+	if(code < 0) {
+		LOGI("%d\n", code);
+		return NULL;
+	}
+	
+	freeContext(&ctx);
+
+    return (*env)->NewStringUTF(env, getResponseBody());
+}

@@ -225,16 +225,18 @@ int getChapterImages(Context *ctx, const char* chapter_id) {
     return run_request(ctx, buffer, bytes);
 }
 
-int downloadChapter(Context *ctx, FILE *f, const char *domain, const char *hash, const char *file)
+int downloadFile(Context *ctx, FILE *f, const char *domain, const char *path)
 {
-    int bytes;
+    int bytes, initialised;
+    size_t bytes_written;
     char buffer[BUFFER_SIZE+1];
+    char *body_start;
 
     bytes = snprintf(
         buffer,
         BUFFER_SIZE,
-        BUILD_GET_REQUEST("%s", "/data-saver/%s/%s"),
-        hash, file,
+        BUILD_GET_REQUEST("%s", "%s"),
+        path,
         domain
     );
 
@@ -243,10 +245,46 @@ int downloadChapter(Context *ctx, FILE *f, const char *domain, const char *hash,
         return -1;
     }
 
+    initialised = 0;
+    bytes_written = 0;
     while ((bytes = BIO_read(ctx->bio, buffer, BUFFER_SIZE)) > 0) {
-        if(fwrite(buffer, sizeof(char), bytes, f) == bytes)
+        
+        // If this is the first read, then we must skip the html header
+        if(!initialised) {
+            initialised = 1;
+
+            body_start = strstr(buffer, "\r\n\r\n");
+            assert(body_start);
+
+            body_start += 4;    // Skip the substring
+            assert((body_start - buffer) < BUFFER_SIZE);
+
+            bytes -= (int) (body_start - buffer);
+        } else
+            body_start = buffer;
+        
+        bytes_written += bytes;
+        if(fwrite(body_start, sizeof(char), bytes, f) == bytes)
             continue;
         // TODO: Handle invalid writes
     }
-    return 200;
+    return (int) bytes_written;
+}
+
+int getInfo(Context *ctx, const char* manga_id) {
+    int bytes;
+    char buffer[BUFFER_SIZE+1];
+    
+    buffer[BUFFER_SIZE] = 0;
+    bytes = snprintf(
+        buffer,
+        BUFFER_SIZE,
+        BUILD_GET_REQUEST(
+            DEFAULT_DOMAIN_NAME,
+            "/manga/%s?includes[]=cover_art"
+        ),
+        manga_id
+    );
+
+    return run_request(ctx, buffer, bytes);
 }

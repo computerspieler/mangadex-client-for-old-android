@@ -5,38 +5,25 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import android.content.ContentResolver;
-import android.database.Cursor;
+import android.content.Context;
 import android.text.format.Time;
 import android.util.Log;
+
+import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Chapter;
-import fr.speilkoun.mangareader.data.Provider;
+import fr.speilkoun.mangareader.data.Serie;
+import fr.speilkoun.mangareader.utils.FileDownloader;
 import fr.speilkoun.mangareader.utils.ISO8601DateParser;
 
 public class MangaDex {
 	public static String TAG = "MangaDex";
 	public static int MAX_RETRIES = 3;
 
-	public static native String getChapters(String id, int offset);
+	public static native String getInfos(String id);
 	public static native String getChapterImages(String id);
+	public static native String getChapters(String id, int offset);
 
-	public static Integer getSerieIdFromMangadexId(ContentResolver resolver, String id) {
-		Cursor cur = resolver.query(Provider.CONTENT_SERIE_URI,
-			new String[] { "id" },
-			"attribute = '"+id+"' AND source='mangadex'",
-			null,
-			"id ASC"
-		);
-		if(cur.getCount() < 1) {
-			Log.e("Mangadex", "Unable to find a serie with " + id + " as an id");
-			return null;
-		}
-		
-		cur.moveToPosition(0);
-		return cur.getInt(cur.getColumnIndex("id"));
-	}
-
-	static void parseAndAppendChapter(ContentResolver resolver, int manga_db_idx, JSONObject chapter)
+	static void parseAndAppendChapter(int manga_db_idx, JSONObject chapter)
 		throws JSONException {
 		JSONObject attrs = chapter.getJSONObject("attributes");
 
@@ -58,43 +45,33 @@ public class MangaDex {
 			chapter_id = attrs.getString("id");
 		} catch(JSONException e) {}
 		
-		Chapter c = new Chapter(
-			null,
-			manga_db_idx,
-			title,
-			"",
-			chapter_id,
-			volume,
-			chapter_no,
-			publishedAt
+		Database.getInstance().addChapter(
+			new Chapter(
+				null,
+				manga_db_idx,
+				title,
+				"",
+				chapter_id,
+				volume,
+				chapter_no,
+				publishedAt
+			)
 		);
-		resolver.insert(Provider.CONTENT_CHAPTER_URI, c.getContentValues());
 	}
 
-	public static void loadChapters(ContentResolver resolver, String id) {
-		Integer manga_db_idx = MangaDex.getSerieIdFromMangadexId(resolver, id);
-		if(manga_db_idx == null) {
+	public static void loadChapters(String id) {
+		Database db = Database.getInstance();
+
+		Serie s = db.getOneSerie("attribute = '"+id+"' AND source='mangadex'", "id ASC");
+		if(s == null) {
 			Log.e(TAG, "Could not find a manga with following id in db: " + id);
 			return;
 		}
+		int manga_db_idx = s.id;
 		
-		int offset = 0, retry = 0;
-		{
-			Cursor cur = resolver.query(Provider.CONTENT_CHAPTER_URI,
-				new String[] { "COUNT(*) AS count" },
-				"serie_id = "+manga_db_idx,
-				null,
-				null
-			);
-
-			if(cur.getCount() >= 1) {
-				cur.moveToPosition(0);
-				offset = cur.getInt(cur.getColumnIndex("count"));
-				Log.i(TAG, ""+offset);
-			} else 
-				Log.e("Mangadex", "Unable to find a serie with " + id + " as an id");
-		}
+		int retry = 0, offset = db.getChapterCount(manga_db_idx);
 		
+		Log.i(TAG, "Downloading chapters of " + s.id);
 		while(true) {
 			String resp = MangaDex.getChapters(id, offset);
 			
@@ -105,7 +82,8 @@ public class MangaDex {
 				for(int i = 0; i < chapters.length(); i ++) {
 					JSONObject chapter = chapters.getJSONObject(i);
 					try {
-						parseAndAppendChapter(resolver, manga_db_idx, chapter);
+						Log.i(TAG, "Downloading chapter " + i);
+						parseAndAppendChapter(manga_db_idx, chapter);
 					} catch(JSONException e) {
 						Log.e(TAG, "Could not parse a chapter output for " + id + " n " + i);
 						e.printStackTrace();
@@ -124,5 +102,67 @@ public class MangaDex {
 					break;
 			}
 		}
+	}
+
+	public static Serie addManga(Context ctx, String id)
+		throws JSONException {
+		String resp = MangaDex.getInfos(id);
+		JSONTokener tokener = new JSONTokener(resp);
+		JSONObject manga = new JSONObject(tokener).getJSONObject("data");
+
+		JSONObject titles = manga.getJSONObject("attributes").getJSONObject("title");
+		String title = null;
+
+		try {
+			if(title == null)
+				title = titles.getString("en");
+		} catch(JSONException e) {}
+		try {
+			if(title == null)
+				title = titles.getString("jp");
+		} catch(JSONException e) {}
+		try {
+			if(title == null)
+				title = titles.getString("fr");
+		} catch(JSONException e) {}
+
+		String cover_filename = null;
+		JSONArray relationships = manga.getJSONArray("relationships");
+		for(int i = 0; i < relationships.length(); i ++) {
+			JSONObject obj = relationships.getJSONObject(i);
+			if(!obj.getString("type").equals("cover_art"))
+				continue;
+			
+			Log.i(TAG, "Found a cover art");
+			cover_filename = obj.getJSONObject("attributes")
+				.getString("fileName");
+		}
+
+		Long cover_image_id = null;
+		if(cover_filename != null) {
+			try {
+				Log.i(TAG, "Loading cover");
+				cover_image_id = FileDownloader.downloadFileAndAddToDatabase(ctx,
+					cover_filename,
+					"uploads.mangadex.org",
+					"/covers/" + id + "/" + cover_filename + ".256.jpg"
+				);
+			} catch (Exception e) {
+				Log.e(TAG, "Unable to download the cover image of " + title);
+				Log.e(TAG, e.toString());
+			}
+		}
+		
+		Serie s = new Serie(
+			null,
+			title,
+			cover_image_id,
+			"mangadex",
+			id
+		);
+		Database.getInstance().addSerie(s);
+		MangaDex.loadChapters(id);
+
+		return s;
 	}
 }

@@ -33,7 +33,8 @@ public class ISO8601DateParser {
             return null;
         }
 
-        int second = 0, minute = 0, hour = 0, msecs = 0;
+        // TODO: msecs support
+        int second = 0, minute = 0, hour = 0;
         int tz_min = 0, tz_hour = 0;
 
         if(m.group(4).length() > 0) {
@@ -41,7 +42,7 @@ public class ISO8601DateParser {
             minute = Integer.parseInt(m.group(6));
             second = Integer.parseInt(m.group(7));
 
-            if(m.group(10) != "Z") {
+            if(!m.group(10).equals("Z")) {
                 tz_hour = Integer.parseInt(m.group(12));
                 tz_min = Integer.parseInt(m.group(13));
 

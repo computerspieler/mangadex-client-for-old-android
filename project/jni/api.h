@@ -20,8 +20,8 @@ const char* getResponseBody(void);
 
 int getChapters(Context *ctx, const char* id, size_t offset);
 int getChapterImages(Context *ctx, const char* chapter_id);
-int downloadChapter(Context *ctx, FILE *f,
-	const char *domain, const char *hash, const char *file
-);
+int getInfo(Context *ctx, const char* manga_id);
+
+int downloadFile(Context *ctx, FILE *f, const char *domain, const char *path);
 
 #endif /* API_H */
