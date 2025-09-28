@@ -104,8 +104,14 @@ public class MangaDex {
 		}
 	}
 
-	public static Serie addManga(Context ctx, String id)
+	public static Serie findOrAddManga(Context ctx, String id)
 		throws JSONException {
+		Serie output = Database.getInstance()
+			.getOneSerie("attribute = '"+id+"' AND source='mangadex'", "id ASC");
+		
+		if(output != null)
+			return output;
+		
 		String resp = MangaDex.getInfos(id);
 		JSONTokener tokener = new JSONTokener(resp);
 		JSONObject manga = new JSONObject(tokener).getJSONObject("data");
@@ -153,16 +159,16 @@ public class MangaDex {
 			}
 		}
 		
-		Serie s = new Serie(
+		output = new Serie(
 			null,
 			title,
 			cover_image_id,
 			"mangadex",
 			id
 		);
-		Database.getInstance().addSerie(s);
+		Database.getInstance().addSerie(output);
 		MangaDex.loadChapters(id);
 
-		return s;
+		return output;
 	}
 }

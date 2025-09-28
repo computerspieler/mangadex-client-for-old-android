@@ -1,5 +1,7 @@
 package fr.speilkoun.mangareader.data;
 
+import java.util.ArrayList;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -27,13 +29,18 @@ public class Database {
             SQLiteDatabase.CREATE_IF_NECESSARY | SQLiteDatabase.OPEN_READWRITE
         );
         Log.i(TAG, "Database stored at " + path);
-        //mDB = SQLiteDatabase.create(null);
 
         mDB.execSQL(
             "CREATE TABLE files (" +
                 "id INTEGER PRIMARY KEY NOT NULL," +
                 "path TEXT NOT NULL UNIQUE" +
             ");");
+        mDB.execSQL(
+            "CREATE TABLE serie_group (" +
+                "id INTEGER PRIMARY KEY NOT NULL," +
+                "name TEXT NOT NULL" +
+            ");" +
+            "INSERT INTO serie_group(id, name) VALUES (0, 'default')");
         mDB.execSQL(
             "CREATE TABLE serie (" +
                 "id INTEGER PRIMARY KEY NOT NULL," +
@@ -42,8 +49,10 @@ public class Database {
                 "source TEXT," +
                 "cover_image_id INTEGER," +
                 "attribute TEXT," +
+                "group_id INTEGER DEFAULT 0," +
 
                 "FOREIGN KEY(cover_image_id) REFERENCES files(id)" +
+                "FOREIGN KEY(group_id) REFERENCES serie_group(id)" +
             ");");
         mDB.execSQL("CREATE TABLE chapter (" +
                 "id INTEGER PRIMARY KEY NOT NULL," +
@@ -195,6 +204,24 @@ public class Database {
         }
 
         cur.close();
+    }
+
+    public SerieArray adapterSerie(Context ctx) {
+        Cursor cur = mDB.rawQuery("SELECT * FROM serie", null);
+        
+        ArrayList<Serie> series = new ArrayList<Serie>(cur.getCount());
+        for(int i = 0; i < cur.getCount(); i ++) {
+            cur.moveToPosition(i);
+            series.add(new Serie(
+                cur.getInt(cur.getColumnIndex("id")),
+                cur.getString(cur.getColumnIndex("title")),
+                cur.getLong(cur.getColumnIndex("cover_image_id")),
+                cur.getString(cur.getColumnIndex("source")),
+                cur.getString(cur.getColumnIndex("attribute"))
+            ));
+        }
+        
+        return new SerieArray(ctx, series);
     }
 
 	public String getFilePath(long id) {
