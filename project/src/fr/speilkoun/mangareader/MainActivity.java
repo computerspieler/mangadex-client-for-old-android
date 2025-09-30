@@ -2,6 +2,7 @@ package fr.speilkoun.mangareader;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -101,15 +102,20 @@ public class MainActivity extends Activity {
 		Database.initInstance(this);
 		this.setContentView(R.layout.main);
 
-		/*
-		try {
-			MangaDex.findOrAddManga(this, "2a55e420-b5c6-47cb-b189-fb9a1a7d6ab5");
-			//MangaDex.findOrAddManga(this, "13e03584-eb63-4545-af36-89040751c075");
-		} catch(Exception e) {
-			Log.e("addManga", e.getLocalizedMessage());
-		}
-		 */
 		this.refreshList();
+		ListView view = (ListView) this.findViewById(R.id.serie_list);
+		view.setOnItemClickListener(new OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View v, int pos, long id) {
+				Serie s = (Serie) parent.getItemAtPosition(pos);
+				Intent intent = new Intent(
+					MainActivity.this.getApplication(),
+					ChapterActivity.class
+				);
+				intent.putExtra("serie_id", s.id);
+				MainActivity.this.startActivity(intent);
+			}
+		});
 
 		{
 			Button button = (Button) this.findViewById(R.id.add);

@@ -25,6 +25,9 @@ public class ISO8601DateParser {
     }
 
     public static Time parse(String str) {
+        if(str == null)
+            return null;
+        
         Time output = new Time();
         
         Matcher m = REGEX.matcher(str);
@@ -37,7 +40,7 @@ public class ISO8601DateParser {
         int second = 0, minute = 0, hour = 0;
         int tz_min = 0, tz_hour = 0;
 
-        if(m.group(4).length() > 0) {
+        if(m.group(4) != null) if(m.group(4).length() > 0) {
             hour = Integer.parseInt(m.group(5));
             minute = Integer.parseInt(m.group(6));
             second = Integer.parseInt(m.group(7));

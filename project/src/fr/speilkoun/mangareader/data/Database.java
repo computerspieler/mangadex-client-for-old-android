@@ -7,6 +7,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
+import fr.speilkoun.mangareader.utils.ISO8601DateParser;
 
 public class Database {
     private static String TAG = "Database";
@@ -31,18 +32,18 @@ public class Database {
         Log.i(TAG, "Database stored at " + path);
 
         mDB.execSQL(
-            "CREATE TABLE files (" +
+            "CREATE TABLE IF NOT EXISTS files (" +
                 "id INTEGER PRIMARY KEY NOT NULL," +
                 "path TEXT NOT NULL UNIQUE" +
             ");");
         mDB.execSQL(
-            "CREATE TABLE serie_group (" +
+            "CREATE TABLE IF NOT EXISTS serie_group (" +
                 "id INTEGER PRIMARY KEY NOT NULL," +
                 "name TEXT NOT NULL" +
             ");" +
             "INSERT INTO serie_group(id, name) VALUES (0, 'default')");
         mDB.execSQL(
-            "CREATE TABLE serie (" +
+            "CREATE TABLE IF NOT EXISTS serie (" +
                 "id INTEGER PRIMARY KEY NOT NULL," +
                 "status TEXT CHECK(status IN ('FINISHED', 'RUNNING', 'UNKNOWN'))," +
                 "title TEXT," +
@@ -54,7 +55,7 @@ public class Database {
                 "FOREIGN KEY(cover_image_id) REFERENCES files(id)" +
                 "FOREIGN KEY(group_id) REFERENCES serie_group(id)" +
             ");");
-        mDB.execSQL("CREATE TABLE chapter (" +
+        mDB.execSQL("CREATE TABLE IF NOT EXISTS chapter (" +
                 "id INTEGER PRIMARY KEY NOT NULL," +
                 "serie_id INTEGER," +
 
@@ -67,7 +68,7 @@ public class Database {
 
                 "FOREIGN KEY(serie_id) REFERENCES serie(id)" +
             ");");
-        mDB.execSQL("CREATE TABLE pages (" +
+        mDB.execSQL("CREATE TABLE IF NOT EXISTS pages (" +
                 "chapter_id INTEGER NOT NULL," +
                 "file_id INTEGER," +
                 "page INTEGER NOT NULL," +
@@ -222,6 +223,32 @@ public class Database {
         }
         
         return new SerieArray(ctx, series);
+    }
+
+    public ChapterArray adapterChapter(Context ctx, int serie_id) {
+        Cursor cur = mDB.rawQuery(
+            "SELECT * FROM chapter WHERE serie_id = ?",
+            new String[] { ""+serie_id }
+        );
+
+        ArrayList<Chapter> chapters = new ArrayList<Chapter>(cur.getCount());
+        for(int i = 0; i < cur.getCount(); i ++) {
+            cur.moveToPosition(i);
+            chapters.add(new Chapter(
+                cur.getInt(cur.getColumnIndex("id")),
+                cur.getInt(cur.getColumnIndex("serie_id")),
+                cur.getString(cur.getColumnIndex("title")),
+                cur.getString(cur.getColumnIndex("publisher")),
+                cur.getString(cur.getColumnIndex("custom_attributes")),
+                cur.getInt(cur.getColumnIndex("volume_id")),
+                cur.getInt(cur.getColumnIndex("chapter_id")),
+                ISO8601DateParser.parse(
+                    cur.getString(cur.getColumnIndex("release_date"))
+                )
+            ));
+        }
+        
+        return new ChapterArray(ctx, chapters);
     }
 
 	public String getFilePath(long id) {
