@@ -1,5 +1,10 @@
 package fr.speilkoun.mangareader.sources;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,25 +18,57 @@ import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Chapter;
 import fr.speilkoun.mangareader.data.Serie;
 import fr.speilkoun.mangareader.utils.HTTP;
+import fr.speilkoun.mangareader.utils.HTTPException;
 import fr.speilkoun.mangareader.utils.ISO8601DateParser;
 
 public class MangaDex {
 	public static String TAG = "MangaDex";
 	public static int MAX_RETRIES = 3;
 
-	static String DEFAULT_DOMAIN_NAME = "api.mangadex.org";
+	static String DEFAULT_DOMAIN_NAME = "api.mangadex.dev";
 
-	public static String getInfos(String id) {
+	static String getInfos(String id)
+		throws HTTPException {
 		return HTTP.getJSON(DEFAULT_DOMAIN_NAME, "/manga/"+ id +"?includes[]=cover_art");
 	}
 
-	public static String getChapterImages(String id) {
+	static String getChapterImages(String id)
+		throws HTTPException {
 		return HTTP.getJSON(DEFAULT_DOMAIN_NAME, "/at-home/server/"+ id);
 	}
 
-	public static String getChapters(String id, int offset) {
+	static String getChapters(String id, int offset)
+		throws HTTPException {
 		return HTTP.getJSON(DEFAULT_DOMAIN_NAME,
 			"/manga/" + id + "/feed?offset=" + offset +"&limit=10&translatedLanguage[]=en");
+	}
+
+	public static ArrayList<Serie> searchManga(Context ctx, String name)
+		throws JSONException, HTTPException, URISyntaxException, UnsupportedEncodingException
+	{
+		ArrayList<Serie> output = null;
+
+		Log.i(TAG, URLEncoder.encode(name, "utf-8"));
+		String raw = HTTP.getJSON(
+			DEFAULT_DOMAIN_NAME,
+			"/manga?title=" + URLEncoder.encode(name, "utf-8") + "&includes[]=cover_art&limit=3"
+		);
+		
+		JSONTokener tokener = new JSONTokener(raw);
+		JSONObject resp = new JSONObject(tokener);
+
+		if(!resp.getString("result").equals("ok")) {
+			if(resp.has("error"))
+				Log.e(TAG, resp.getString("error"));
+			return null;
+		}
+
+		JSONArray data = resp.getJSONArray("data");
+		output = new ArrayList<Serie>(data.length());
+		for(int i = 0; i < data.length(); i ++)
+			output.add(parseSerie(ctx, data.getJSONObject(i)));
+
+		return output;
 	}
 
 	static void parseAndAppendChapter(int manga_db_idx, JSONObject chapter)
@@ -70,7 +107,8 @@ public class MangaDex {
 		);
 	}
 
-	public static void loadChapters(String id) {
+	public static void loadChapters(String id)
+		throws HTTPException {
 		Database db = Database.getInstance();
 
 		Serie s = db.getOneSerie("attribute = '"+id+"' AND source='mangadex'", "id ASC");
@@ -115,19 +153,11 @@ public class MangaDex {
 		}
 	}
 
-	public static Serie findOrAddManga(Context ctx, String id)
-		throws JSONException {
-		Serie output = Database.getInstance()
-			.getOneSerie("attribute = '"+id+"' AND source='mangadex'", "id ASC");
-		
-		if(output != null)
-			return output;
-		
-		String resp = MangaDex.getInfos(id);
-		JSONTokener tokener = new JSONTokener(resp);
-		JSONObject manga = new JSONObject(tokener).getJSONObject("data");
-
+	static Serie parseSerie(Context ctx, JSONObject manga) 
+		throws JSONException
+	{
 		JSONObject titles = manga.getJSONObject("attributes").getJSONObject("title");
+		String id = manga.getString("id");
 		String title = null;
 
 		try {
@@ -150,6 +180,9 @@ public class MangaDex {
 			if(!obj.getString("type").equals("cover_art"))
 				continue;
 			
+			if(!obj.has("attributes"))
+				continue;
+			
 			Log.i(TAG, "Found a cover art");
 			cover_filename = obj.getJSONObject("attributes")
 				.getString("fileName");
@@ -170,13 +203,28 @@ public class MangaDex {
 			}
 		}
 		
-		output = new Serie(
+		return new Serie(
 			null,
 			title,
 			cover_image_id,
 			"mangadex",
 			id
 		);
+	}
+
+	public static Serie findOrAddManga(Context ctx, String id)
+		throws JSONException, HTTPException {
+		Serie output = Database.getInstance()
+			.getOneSerie("attribute = '"+id+"' AND source='mangadex'", "id ASC");
+		
+		if(output != null)
+			return output;
+		
+		String resp = MangaDex.getInfos(id);
+		JSONTokener tokener = new JSONTokener(resp);
+		JSONObject manga = new JSONObject(tokener).getJSONObject("data");
+
+		output = parseSerie(ctx, manga);
 		Database.getInstance().addSerie(output);
 		MangaDex.loadChapters(id);
 

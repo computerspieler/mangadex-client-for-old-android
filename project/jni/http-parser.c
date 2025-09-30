@@ -1,5 +1,4 @@
 #include "api.h"
-#include "linux/stddef.h"
 
 #include <jni.h>
 #include <errno.h>
@@ -9,6 +8,14 @@
 #define LOG_TAG "HttpParserJNI"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+#define THROW_HTTP_EXCEPTION(env, msg) {				\
+	jclass exception_cls = (*env)->FindClass(			\
+		env,											\
+		"fr/speilkoun/mangareader/utils/HTTPException"	\
+	);													\
+	(*env)->ThrowNew(env, exception_cls, "");			\
+}
 
 static int initialized = 0;
 
@@ -29,7 +36,7 @@ JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved)
 	    deinit_api();
 }
 
-JNIEXPORT jboolean
+JNIEXPORT void
 Java_fr_speilkoun_mangareader_utils_HTTP_rawDownloadFile(
     JNIEnv* env,
     jclass cls,
@@ -46,7 +53,7 @@ Java_fr_speilkoun_mangareader_utils_HTTP_rawDownloadFile(
     f = fopen((*env)->GetStringUTFChars(env, output_path, 0), "wb");
     if(!f) {
         LOGE("Could not open the output path: %s", strerror(errno));
-        return JNI_FALSE;
+		THROW_HTTP_EXCEPTION(env, "Unable to open the desired file");
     }
 
 	raw_domain = (*env)->GetStringUTFChars(env, domain, 0);
@@ -56,15 +63,14 @@ Java_fr_speilkoun_mangareader_utils_HTTP_rawDownloadFile(
         raw_domain,
         (*env)->GetStringUTFChars(env, path, 0)
     );
-	if(output < 0) {
-		LOGI("%d\n", output);
-		return JNI_FALSE;
-	}
-	
-	freeContext(&ctx);
-    fclose(f);
 
-    return JNI_TRUE;
+	freeContext(&ctx);
+	fclose(f);
+	
+	if(output < 0) {
+		LOGI("Received this error code from run_request_and_download_file: %d\n", output);
+		THROW_HTTP_EXCEPTION(env, "Got an error from run_request_and_download_file");
+	}
 }
 
 
@@ -87,12 +93,13 @@ Java_fr_speilkoun_mangareader_utils_HTTP_getJSON(
         raw_domain,
         (*env)->GetStringUTFChars(env, path, 0)
     );
+	freeContext(&ctx);
+
 	if(output < 0) {
-		LOGI("%d\n", output);
+		LOGE("Received this error code from run_request_and_get_json: %d\n", output);
+		THROW_HTTP_EXCEPTION(env, "Got an error from run_request_and_get_json");
 		return NULL;
 	}
 	
-	freeContext(&ctx);
-
     return (*env)->NewStringUTF(env, getResponseBody());
 }

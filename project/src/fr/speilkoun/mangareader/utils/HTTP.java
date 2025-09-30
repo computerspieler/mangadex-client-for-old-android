@@ -8,15 +8,17 @@ public class HTTP {
     static String TAG = "HTTP";
 
     public static native void init();
-    static native boolean rawDownloadFile(
+    static native void rawDownloadFile(
         String output_path,
         String domain,
         String path
-    );
+    )
+        throws HTTPException;
     public static native String getJSON(
         String domain,
         String path
-    );
+    )
+        throws HTTPException;
 
     public static long downloadFileAndAddToDatabase(
         Context ctx,
@@ -24,7 +26,7 @@ public class HTTP {
         String domain,
         String path
     )
-        throws Exception
+        throws HTTPException
     {
         Database db = Database.getInstance();
         String output_path = ctx.getFileStreamPath(filename).getAbsolutePath();
@@ -33,8 +35,7 @@ public class HTTP {
         
         if(idx == null) {
             Log.i(TAG, "Downloading " + domain + path + " to " + output_path);
-            if(!rawDownloadFile(output_path, domain, path))
-                throw new Exception("Unable to download " + output_path);
+            rawDownloadFile(output_path, domain, path);
             idx = db.addFile(output_path);
         }
         return idx;

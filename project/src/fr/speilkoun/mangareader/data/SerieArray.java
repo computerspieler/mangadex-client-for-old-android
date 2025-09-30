@@ -21,7 +21,6 @@ public class SerieArray extends ArrayAdapter<Serie> {
         super(context, 0, series);
     }
 
-
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         Serie s = this.getItem(position);
@@ -33,11 +32,9 @@ public class SerieArray extends ArrayAdapter<Serie> {
 
         /* Do not remove the line below, as it increases stability */
         Log.i(TAG, "Title: " + s.title);
-        {
-            TextView vTitle = (TextView) convertView.findViewById(R.id.sTitle);
-            vTitle.setText(s.title);
-        }
-
+        TextView vTitle = (TextView) convertView.findViewById(R.id.sTitle);
+        vTitle.setText(s.title);
+        
         if(s.cover_image_id != null) {
             String cover_path = Database.getInstance().getFilePath(s.cover_image_id);
             ImageView v = (ImageView) convertView.findViewById(R.id.sImage);

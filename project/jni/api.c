@@ -153,13 +153,14 @@ int run_request_and_get_json(Context *ctx, const char* domain, const char *path)
         LOGE("Invalid response\n");
         error_code = -5;
         sscanf(buffer, "HTTP/1.1 %d", &error_code);
-        return error_code;
+        return -error_code;
     }
     
     body_start = strstr(buffer, "content-length: ");
     if(body_start) {
         body_start += strlen("content-length: ");
         sscanf(body_start, "%d", &output_size);
+        LOGI("Found content-length: %d", output_size);
     } else
         body_start = buffer;
     
