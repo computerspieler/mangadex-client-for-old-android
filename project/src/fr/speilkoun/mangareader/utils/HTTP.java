@@ -4,11 +4,16 @@ import android.content.Context;
 import android.util.Log;
 import fr.speilkoun.mangareader.data.Database;
 
-public class FileDownloader {
-    static String TAG = "FileDownloader";
-    
+public class HTTP {
+    static String TAG = "HTTP";
+
+    public static native void init();
     static native boolean rawDownloadFile(
         String output_path,
+        String domain,
+        String path
+    );
+    public static native String getJSON(
         String domain,
         String path
     );
@@ -33,5 +38,9 @@ public class FileDownloader {
             idx = db.addFile(output_path);
         }
         return idx;
+    }
+
+	static {
+        System.loadLibrary("http-parser");
     }
 }

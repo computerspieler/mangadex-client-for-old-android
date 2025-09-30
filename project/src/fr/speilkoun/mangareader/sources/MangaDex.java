@@ -12,16 +12,27 @@ import android.util.Log;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Chapter;
 import fr.speilkoun.mangareader.data.Serie;
-import fr.speilkoun.mangareader.utils.FileDownloader;
+import fr.speilkoun.mangareader.utils.HTTP;
 import fr.speilkoun.mangareader.utils.ISO8601DateParser;
 
 public class MangaDex {
 	public static String TAG = "MangaDex";
 	public static int MAX_RETRIES = 3;
 
-	public static native String getInfos(String id);
-	public static native String getChapterImages(String id);
-	public static native String getChapters(String id, int offset);
+	static String DEFAULT_DOMAIN_NAME = "api.mangadex.org";
+
+	public static String getInfos(String id) {
+		return HTTP.getJSON(DEFAULT_DOMAIN_NAME, "/manga/"+ id +"?includes[]=cover_art");
+	}
+
+	public static String getChapterImages(String id) {
+		return HTTP.getJSON(DEFAULT_DOMAIN_NAME, "/at-home/server/"+ id);
+	}
+
+	public static String getChapters(String id, int offset) {
+		return HTTP.getJSON(DEFAULT_DOMAIN_NAME,
+			"/manga/" + id + "/feed?offset=" + offset +"&limit=10&translatedLanguage[]=en");
+	}
 
 	static void parseAndAppendChapter(int manga_db_idx, JSONObject chapter)
 		throws JSONException {
@@ -148,7 +159,7 @@ public class MangaDex {
 		if(cover_filename != null) {
 			try {
 				Log.i(TAG, "Loading cover");
-				cover_image_id = FileDownloader.downloadFileAndAddToDatabase(ctx,
+				cover_image_id = HTTP.downloadFileAndAddToDatabase(ctx,
 					cover_filename,
 					"uploads.mangadex.org",
 					"/covers/" + id + "/" + cover_filename + ".256.jpg"

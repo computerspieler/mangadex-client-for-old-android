@@ -8,9 +8,9 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#define DEFAULT_DOMAIN_NAME "api.mangadex.org"
 #define HTTPS_PORT "443"
 #define USER_AGENT "manga-reader-for-old-android"
+#define BUFFER_SIZE 4096
 
 #include <android/log.h>
 
@@ -53,9 +53,17 @@ void freeContext(Context *ctx) {
 	SSL_CTX_free(ctx->ctx);
 }
 
-int createContext(Context *ctx) {
+int createContext(Context *ctx, const char *domain) {
 	SSL* ssl;
     const SSL_METHOD *method;
+    char hostname_buffer[BUFFER_SIZE+1];
+    size_t bytes;
+
+    bytes = snprintf(hostname_buffer, BUFFER_SIZE,
+        "%s:" HTTPS_PORT,
+        domain
+    );
+    hostname_buffer[bytes] = 0;
 
     method = TLS_client_method();
 
@@ -72,7 +80,7 @@ int createContext(Context *ctx) {
         return 1;
     }
 
-	BIO_set_conn_hostname(ctx->bio, DEFAULT_DOMAIN_NAME ":" HTTPS_PORT);
+	BIO_set_conn_hostname(ctx->bio, hostname_buffer);
 
 	BIO_get_ssl(ctx->bio, &ssl);
 	if(!ssl) {
@@ -81,7 +89,7 @@ int createContext(Context *ctx) {
         return 1;
 	}
 
-	if (!SSL_set_tlsext_host_name(ssl, DEFAULT_DOMAIN_NAME)) {
+	if (!SSL_set_tlsext_host_name(ssl, domain)) {
         ERR_print_errors_fp(stderr);
         SSL_free(ssl);
         SSL_CTX_free(ctx->ctx);
@@ -106,15 +114,30 @@ int createContext(Context *ctx) {
 	return 0;
 }
 
-#define BUFFER_SIZE 4096
+#define BUILD_GET_REQUEST(path, domain) \
+    "GET " path " HTTP/1.1\r\n"         \
+    "Host: " domain "\r\n"              \
+    "User-Agent: " USER_AGENT "\r\n"    \
+    "Accept: */*\r\n"                   \
+    "Connection: keep-alive\r\n\r\n"
 
-static int run_request(Context *ctx, const char* request, int request_length) {
+int run_request_and_get_json(Context *ctx, const char* domain, const char *path) {
     char buffer[BUFFER_SIZE+1];
     int error_code;
     int bytes, output_size, copied_length;
     char *body_start;
 
-    if(BIO_write(ctx->bio, request, request_length) < 0) {
+    bytes = snprintf(
+        buffer,
+        BUFFER_SIZE,
+        BUILD_GET_REQUEST("%s", "%s"),
+        path, domain
+    );
+
+    if(bytes == BUFFER_SIZE)
+        return -5;
+
+    if(BIO_write(ctx->bio, buffer, bytes) < 0) {
 		ERR_print_errors_fp(stderr);
         return -1;
     }
@@ -178,54 +201,7 @@ static int run_request(Context *ctx, const char* request, int request_length) {
     return output_size;
 }
 
-#define BUILD_GET_REQUEST(domain, path) (    \
-    "GET " path " HTTP/1.1\r\n"              \
-    "Host: " domain "\r\n"                   \
-    "User-Agent: " USER_AGENT "\r\n"         \
-    "Accept: */*\r\n"                        \
-    "Connection: keep-alive\r\n\r\n"         \
-)
-#define LANGUAGE "en"
-//#define LIMIT 10
-#define LIMIT_S "10"
-
-int getChapters(Context *ctx, const char* id, size_t offset) {
-    int bytes;
-    char buffer[BUFFER_SIZE+1];
-    
-    buffer[BUFFER_SIZE] = 0;
-    bytes = snprintf(
-        buffer,
-        BUFFER_SIZE,
-        BUILD_GET_REQUEST(
-            DEFAULT_DOMAIN_NAME,
-            "/manga/%s/feed?offset=%lu&limit=" LIMIT_S "&translatedLanguage[]=" LANGUAGE
-        ),
-        id, offset
-    );
-
-    return run_request(ctx, buffer, bytes);
-}
-
-int getChapterImages(Context *ctx, const char* chapter_id) {
-    int bytes;
-    char buffer[BUFFER_SIZE+1];
-    
-    buffer[BUFFER_SIZE] = 0;
-    bytes = snprintf(
-        buffer,
-        BUFFER_SIZE,
-        BUILD_GET_REQUEST(
-            DEFAULT_DOMAIN_NAME,
-            "/at-home/server/%s"
-        ),
-        chapter_id
-    );
-
-    return run_request(ctx, buffer, bytes);
-}
-
-int downloadFile(Context *ctx, FILE *f, const char *domain, const char *path)
+int run_request_and_download_file(Context *ctx, FILE *f, const char *domain, const char *path)
 {
     int bytes, initialised;
     size_t bytes_written;
@@ -269,22 +245,4 @@ int downloadFile(Context *ctx, FILE *f, const char *domain, const char *path)
         // TODO: Handle invalid writes
     }
     return (int) bytes_written;
-}
-
-int getInfo(Context *ctx, const char* manga_id) {
-    int bytes;
-    char buffer[BUFFER_SIZE+1];
-    
-    buffer[BUFFER_SIZE] = 0;
-    bytes = snprintf(
-        buffer,
-        BUFFER_SIZE,
-        BUILD_GET_REQUEST(
-            DEFAULT_DOMAIN_NAME,
-            "/manga/%s?includes[]=cover_art"
-        ),
-        manga_id
-    );
-
-    return run_request(ctx, buffer, bytes);
 }

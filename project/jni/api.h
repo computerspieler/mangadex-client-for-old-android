@@ -13,15 +13,12 @@ typedef struct Context Context;
 
 void init_api(void);
 void deinit_api(void);
-int createContext(Context *ctx);
+int createContext(Context *ctx, const char *domain);
 void freeContext(Context *ctx);
 
 const char* getResponseBody(void);
 
-int getChapters(Context *ctx, const char* id, size_t offset);
-int getChapterImages(Context *ctx, const char* chapter_id);
-int getInfo(Context *ctx, const char* manga_id);
-
-int downloadFile(Context *ctx, FILE *f, const char *domain, const char *path);
+int run_request_and_get_json(Context *ctx, const char* domain, const char *path);
+int run_request_and_download_file(Context *ctx, FILE *f, const char *domain, const char *path);
 
 #endif /* API_H */

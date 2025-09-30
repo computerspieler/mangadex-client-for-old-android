@@ -3,3 +3,4 @@ project/libs/
 project/gen/
 openssl
 .vscode
+.clangd

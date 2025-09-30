@@ -12,15 +12,17 @@ import android.widget.ListView;
 import android.widget.TextView;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.sources.MangaDex;
+import fr.speilkoun.mangareader.utils.HTTP;
 
 public class MainActivity extends Activity {
 
 	static {
 		Log.d("mangadex", "Starting");
-		OpenSSL.init();
+		HTTP.init();
 	}
 
 	static final int ADD_MANGA_DIALOG = 0;
+	static final int MANGA_SELECTION_DIALOG = 1;
 
 	@Override
 	protected Dialog onCreateDialog(int id) {
@@ -43,6 +45,9 @@ public class MainActivity extends Activity {
 				}
 			});
 			break;
+		
+		case MANGA_SELECTION_DIALOG:
+			break;
 		}
 		
 		return dialog;
@@ -54,13 +59,14 @@ public class MainActivity extends Activity {
 		
 		Database.initInstance(this);
 		this.setContentView(R.layout.main);
-/*
+
 		try {
 			MangaDex.findOrAddManga(this, "2a55e420-b5c6-47cb-b189-fb9a1a7d6ab5");
 			//MangaDex.findOrAddManga(this, "13e03584-eb63-4545-af36-89040751c075");
 		} catch(JSONException e) {
 			Log.e("addManga", e.getLocalizedMessage());
 		}
+		/*
 		 */
 		{
 			ListView view = (ListView) this.findViewById(R.id.serie_list);
