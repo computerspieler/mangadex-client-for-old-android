@@ -32,8 +32,10 @@ public class SerieArray extends ArrayAdapter<Serie> {
 
         /* Do not remove the line below, as it increases stability */
         Log.i(TAG, "Title: " + s.title);
-        TextView vTitle = (TextView) convertView.findViewById(R.id.sTitle);
-        vTitle.setText(s.title);
+        if(s.title != null) {
+            TextView vTitle = (TextView) convertView.findViewById(R.id.sTitle);
+            vTitle.setText(s.title);
+        }
         
         if(s.cover_image_id != null) {
             String cover_path = Database.getInstance().getFilePath(s.cover_image_id);

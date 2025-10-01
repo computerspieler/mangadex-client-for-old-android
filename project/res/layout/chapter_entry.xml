@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
-    <ImageView android:id="@+id/sImage"
-        android:adjustViewBounds="false"
-        android:layout_width="32dp"
-        android:layout_height="32dp"/>
-    <TextView android:id="@+id/sTitle"
+    <TextView android:id="@+id/cTitle"
         android:textStyle="bold"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"/>
+    <TextView android:id="@+id/cInfo"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"/>
 </LinearLayout>

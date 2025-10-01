@@ -227,7 +227,7 @@ public class Database {
 
     public ChapterArray adapterChapter(Context ctx, int serie_id) {
         Cursor cur = mDB.rawQuery(
-            "SELECT * FROM chapter WHERE serie_id = ?",
+            "SELECT * FROM chapter WHERE serie_id = ? ORDER BY chapter_id DESC, release_date DESC",
             new String[] { ""+serie_id }
         );
 

@@ -11,7 +11,7 @@ public class ChapterActivity extends Activity {
     Serie mSerie;
 
 	void refreshList() {
-		ListView view = (ListView) this.findViewById(R.id.serie_list);
+		ListView view = (ListView) this.findViewById(R.id.chapters_list);
 		view.setAdapter(Database.getInstance().adapterChapter(this, mSerie.id));
 	}
 
@@ -23,7 +23,7 @@ public class ChapterActivity extends Activity {
         int serie_id = getIntent().getExtras().getInt("serie_id");
         mSerie = db.getOneSerie("id = " + serie_id, "id ASC");
 
-		this.setContentView(R.layout.main);
+		this.setContentView(R.layout.chapters);
         this.refreshList();
     }
 }

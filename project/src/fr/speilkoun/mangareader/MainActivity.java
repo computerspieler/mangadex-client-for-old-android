@@ -2,6 +2,8 @@ package fr.speilkoun.mangareader;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -45,7 +47,7 @@ public class MainActivity extends Activity {
 					MainActivity.this.add_manga_name = ((TextView) dialog.findViewById(R.id.manga_name))
 						.getText()
 						.toString();
-					dialog.dismiss();
+					MainActivity.this.removeDialog(ADD_MANGA_DIALOG);
 
 					Log.i("Done", "Got: " + MainActivity.this.add_manga_name);
 					MainActivity.this.showDialog(MANGA_SELECTION_DIALOG);
@@ -77,6 +79,10 @@ public class MainActivity extends Activity {
 					}
 				});
 				dialog.setContentView(selection);
+				dialog.setOnDismissListener(new OnDismissListener() {
+					public void onDismiss(DialogInterface d)
+					{ MainActivity.this.removeDialog(MANGA_SELECTION_DIALOG); }
+				});
 				
 			} catch(Exception e) {
 				Log.e("onCreateDialog",
@@ -91,8 +97,15 @@ public class MainActivity extends Activity {
 	}
 
 	void refreshList() {
+		Database db = Database.getInstance();
+		if(db == null) {
+			Log.e("refreshList", "The database is not initialized");
+			return;
+		}
+
 		ListView view = (ListView) this.findViewById(R.id.serie_list);
-		view.setAdapter(Database.getInstance().adapterSerie(this));
+		assert view != null;
+		view.setAdapter(db.adapterSerie(this));
 	}
 
 	@Override

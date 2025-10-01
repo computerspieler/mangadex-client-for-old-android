@@ -25,7 +25,7 @@ public class MangaDex {
 	public static String TAG = "MangaDex";
 	public static int MAX_RETRIES = 3;
 
-	static String DEFAULT_DOMAIN_NAME = "api.mangadex.dev";
+	static String DEFAULT_DOMAIN_NAME = "api.mangadex.org";
 
 	static String getInfos(String id)
 		throws HTTPException {
