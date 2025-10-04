@@ -31,9 +31,14 @@ public class MainActivity extends Activity {
 	String add_manga_name = null;
 
 	@Override
-	protected Dialog onCreateDialog(int id) {
-		Button done;
+	protected Dialog onCreateDialog(final int id) {
+		Button done, cancel;
 		final Dialog dialog = new Dialog(this);
+
+		dialog.setOnDismissListener(new OnDismissListener() {
+			public void onDismiss(DialogInterface d)
+			{ MainActivity.this.removeDialog(id); }
+		});
 
 		switch(id) {
 		case ADD_MANGA_DIALOG:
@@ -53,11 +58,19 @@ public class MainActivity extends Activity {
 					MainActivity.this.showDialog(MANGA_SELECTION_DIALOG);
 				}
 			});
+
+			cancel = (Button) dialog.findViewById(R.id.cancel);
+			cancel.setOnClickListener(new Button.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					dialog.dismiss();
+				}
+			});
 			break;
 		
 		case MANGA_SELECTION_DIALOG:
+			dialog.setTitle(R.string.add_manga);
 			try {
-				dialog.setTitle(R.string.add_manga);
 				ListView selection = new ListView(this);
 				selection.setAdapter(new SerieArray(this,
 					MangaDex.searchManga(this, MainActivity.this.add_manga_name)
@@ -79,10 +92,6 @@ public class MainActivity extends Activity {
 					}
 				});
 				dialog.setContentView(selection);
-				dialog.setOnDismissListener(new OnDismissListener() {
-					public void onDismiss(DialogInterface d)
-					{ MainActivity.this.removeDialog(MANGA_SELECTION_DIALOG); }
-				});
 				
 			} catch(Exception e) {
 				Log.e("onCreateDialog",
@@ -114,6 +123,8 @@ public class MainActivity extends Activity {
 		
 		Database.initInstance(this);
 		this.setContentView(R.layout.main);
+		//this.findViewById(R.layout.main)
+		//	.setBackgroundDrawable(android.R.drawable.screen_background_dark);
 
 		this.refreshList();
 		ListView view = (ListView) this.findViewById(R.id.serie_list);

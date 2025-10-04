@@ -59,10 +59,10 @@ public class Database {
                 "id INTEGER PRIMARY KEY NOT NULL," +
                 "serie_id INTEGER," +
 
-                "volume_id  INTEGER," +
+                "volume_id INTEGER," +
                 "chapter_id INTEGER NOT NULL," +
                 "title TEXT," +
-                "publisher  TEXT," +
+                "publisher TEXT," +
                 "release_date TEXT," +
                 "custom_attributes TEXT," +
 
@@ -234,16 +234,23 @@ public class Database {
         ArrayList<Chapter> chapters = new ArrayList<Chapter>(cur.getCount());
         for(int i = 0; i < cur.getCount(); i ++) {
             cur.moveToPosition(i);
+            Log.i(TAG, ""+cur.isNull(cur.getColumnIndex("title")));
             chapters.add(new Chapter(
                 cur.getInt(cur.getColumnIndex("id")),
                 cur.getInt(cur.getColumnIndex("serie_id")),
-                cur.getString(cur.getColumnIndex("title")),
-                cur.getString(cur.getColumnIndex("publisher")),
-                cur.getString(cur.getColumnIndex("custom_attributes")),
-                cur.getInt(cur.getColumnIndex("volume_id")),
-                cur.getInt(cur.getColumnIndex("chapter_id")),
+                cur.isNull(cur.getColumnIndex("title")) ? null :
+                    cur.getString(cur.getColumnIndex("title")),
+                cur.isNull(cur.getColumnIndex("publisher")) ? null :
+                    cur.getString(cur.getColumnIndex("publisher")),
+                cur.isNull(cur.getColumnIndex("custom_attributes")) ? null :
+                    cur.getString(cur.getColumnIndex("custom_attributes")),
+                cur.isNull(cur.getColumnIndex("volume_id")) ? null :
+                    cur.getInt(cur.getColumnIndex("volume_id")),
+                cur.isNull(cur.getColumnIndex("chapter_id")) ? null :
+                    cur.getInt(cur.getColumnIndex("chapter_id")),
                 ISO8601DateParser.parse(
-                    cur.getString(cur.getColumnIndex("release_date"))
+                    cur.isNull(cur.getColumnIndex("release_date")) ? null :
+                        cur.getString(cur.getColumnIndex("release_date"))
                 )
             ));
         }

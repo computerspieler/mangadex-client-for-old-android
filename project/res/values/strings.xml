@@ -5,4 +5,5 @@
     <string name="add_manga">Add a manga</string>
     <string name="enter_manga_name">Please enter a manga's name: </string>
     <string name="done">Done</string>
+    <string name="cancel">Cancel</string>
 </resources>
