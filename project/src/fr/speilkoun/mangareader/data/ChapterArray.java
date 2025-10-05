@@ -36,7 +36,7 @@ public class ChapterArray extends ArrayAdapter<Chapter> {
 
         TextView vInfo = (TextView) convertView.findViewById(R.id.cInfo);
         StringBuilder info_builder = new StringBuilder();
-        if(c.volume_id != null) {
+        if(c.volume_id != null || c.volume_id != 0) {
             info_builder.append("Volume ");
             info_builder.append(c.volume_id);
             info_builder.append("  ");
@@ -47,9 +47,10 @@ public class ChapterArray extends ArrayAdapter<Chapter> {
             info_builder.append("  ");
         }
         if(c.release_date != null) {
-            info_builder.append(c.release_date.format2445());
-            //info_builder.append("  ");
+            info_builder.append("Release: ");
+            info_builder.append(c.release_date.format("%Y-%m-%d"));
         }
+        
         vInfo.setText(info_builder.toString());
         
         return convertView;
