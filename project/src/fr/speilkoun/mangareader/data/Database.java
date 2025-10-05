@@ -13,10 +13,10 @@ public class Database {
     private static String TAG = "Database";
 
     private static Database mInstance = null;
-    public static Database getInstance()
+    public static synchronized Database getInstance()
     { return mInstance; }
 
-    public static void initInstance(Context ctx) {
+    public static synchronized void initInstance(Context ctx) {
         if(mInstance == null)
             mInstance = new Database(ctx);
     }
@@ -79,11 +79,11 @@ public class Database {
         );
     }
 
-    public void addSerie(Serie s) {
+    public synchronized void addSerie(Serie s) {
         mDB.insertOrThrow("serie", null, s.getContentValues());
     }
 
-    public Serie getOneSerie(String filter, String order) {
+    public synchronized Serie getOneSerie(String filter, String order) {
         Cursor cur = mDB.query("serie",
             new String[] {
                 "id",
@@ -116,7 +116,7 @@ public class Database {
         return s;
     }
 
-    public Integer getChapterCount(int manga_id) {
+    public synchronized Integer getChapterCount(int manga_id) {
         Cursor cur = mDB.query("chapter",
             new String[] { "COUNT(*) AS count" },
             "serie_id = "+manga_id,
@@ -136,11 +136,11 @@ public class Database {
         return output;
     }
 
-    public void addChapter(Chapter c) {
+    public synchronized void addChapter(Chapter c) {
         mDB.insertOrThrow("chapter", null, c.getContentValues());
     }
 
-    public long getFilesCount() {
+    public synchronized long getFilesCount() {
         Cursor cur = mDB.query("files",
             new String[] { "COUNT(*) AS count" },
             null,
@@ -159,13 +159,13 @@ public class Database {
         return output;
     }
 
-    public long addFile(String path) {
+    public synchronized long addFile(String path) {
         ContentValues values = new ContentValues(1);
         values.put("path", path);
         return mDB.insert("files", null, values);
     }
 
-    public Long findFile(String path) {
+    public synchronized Long findFile(String path) {
         Cursor cur = mDB.query("files",
             new String[] { "id" },
             "path = ?",
@@ -186,7 +186,7 @@ public class Database {
         return idx;
     }
 
-    public void logChapters() {
+    public synchronized void logChapters() {
         Cursor cur = mDB.query("chapter",
             new String[] { "serie_id", "chapter_id" },
             null,
@@ -207,7 +207,7 @@ public class Database {
         cur.close();
     }
 
-    public SerieArray adapterSerie(Context ctx) {
+    public synchronized SerieArray adapterSerie(Context ctx) {
         Cursor cur = mDB.rawQuery("SELECT * FROM serie", null);
         
         ArrayList<Serie> series = new ArrayList<Serie>(cur.getCount());
@@ -225,7 +225,7 @@ public class Database {
         return new SerieArray(ctx, series);
     }
 
-    public ChapterArray adapterChapter(Context ctx, int serie_id) {
+    public synchronized ChapterArray adapterChapter(Context ctx, int serie_id) {
         Cursor cur = mDB.rawQuery(
             "SELECT * FROM chapter WHERE serie_id = ? ORDER BY chapter_id DESC, release_date DESC",
             new String[] { ""+serie_id }
@@ -258,7 +258,7 @@ public class Database {
         return new ChapterArray(ctx, chapters);
     }
 
-	public String getFilePath(long id) {
+	public synchronized String getFilePath(long id) {
         Cursor cur = mDB.query("files",
             new String[] { "path" },
             "id = ?",

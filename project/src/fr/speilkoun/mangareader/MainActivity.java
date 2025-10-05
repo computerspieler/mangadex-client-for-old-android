@@ -2,6 +2,9 @@ package fr.speilkoun.mangareader;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
@@ -29,6 +32,8 @@ public class MainActivity extends Activity {
 	static final int ADD_MANGA_DIALOG = 0;
 	static final int MANGA_SELECTION_DIALOG = 1;
 	String add_manga_name = null;
+
+	NotificationManager nm;
 
 	@Override
 	protected Dialog onCreateDialog(final int id) {
@@ -78,17 +83,49 @@ public class MainActivity extends Activity {
 				selection.setOnItemClickListener(new OnItemClickListener() {
 					@Override
 					public void onItemClick(AdapterView<?> parent, View v, int pos, long id) {
-						Serie s = (Serie) parent.getItemAtPosition(pos);
+						final Serie s = (Serie) parent.getItemAtPosition(pos);
+
 						Database.getInstance().addSerie(s);
 						MainActivity.this.refreshList();
+						
+						Notification notification = new Notification(
+							android.R.drawable.ic_notification_overlay,
+							"Loading " + s.title,
+							System.currentTimeMillis()
+						);
+						PendingIntent contentIntent = PendingIntent.getActivity(
+							MainActivity.this,
+							0,
+							new Intent(MainActivity.this, MainActivity.class),
+							0
+						);
+						notification.setLatestEventInfo(getApplicationContext(),
+							getString(R.string.loading_serie),
+							"Loading " + s.title,
+							contentIntent
+						);
+						notification.flags |= Notification.FLAG_NO_CLEAR;
+						notification.flags |= Notification.FLAG_ONGOING_EVENT;
+
+						final int notif_id = 1;
+						nm.notify(notif_id, notification);
+						
+						new Thread(new Runnable() {
+							@Override
+							public void run() {
+								try {
+									MangaDex.loadChapters(s.attribute);
+								} catch(Exception e) {
+									Log.e("onItemClick",
+										"Unable to load chapters: " + e.getClass().getCanonicalName(),
+										e);
+								}
+								nm.cancel(notif_id);
+							}
+						},
+						"load_" + s.id).start();
+						
 						dialog.dismiss();
-						try {
-							MangaDex.loadChapters(s.attribute);
-						} catch(Exception e) {
-							Log.e("onItemClick",
-								"Unable to load chapters: " + e.getClass().getCanonicalName(),
-								e);
-						}
 					}
 				});
 				dialog.setContentView(selection);
@@ -120,6 +157,8 @@ public class MainActivity extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		
 		Database.initInstance(this);
 		this.setContentView(R.layout.main);

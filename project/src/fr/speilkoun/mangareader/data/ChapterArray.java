@@ -1,10 +1,8 @@
 package fr.speilkoun.mangareader.data;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 
 import android.content.Context;
-import android.text.format.Time;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
