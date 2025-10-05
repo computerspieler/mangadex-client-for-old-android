@@ -1,6 +1,9 @@
 package fr.speilkoun.mangareader;
 
+import java.util.ArrayList;
+
 import android.app.Activity;
+import android.app.ActivityGroup;
 import android.app.Dialog;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -15,14 +18,16 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TabHost;
 import android.widget.TextView;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Serie;
 import fr.speilkoun.mangareader.data.SerieArray;
+import fr.speilkoun.mangareader.data.SerieGroup;
 import fr.speilkoun.mangareader.sources.MangaDex;
 import fr.speilkoun.mangareader.utils.HTTP;
 
-public class MainActivity extends Activity {
+public class MainActivity extends ActivityGroup {
 
 	static {
 		Log.d("mangadex", "Starting");
@@ -86,7 +91,7 @@ public class MainActivity extends Activity {
 						final Serie s = (Serie) parent.getItemAtPosition(pos);
 
 						Database.getInstance().addSerie(s);
-						MainActivity.this.refreshList();
+						MainActivity.this.refreshSelectedList();
 						
 						Notification notification = new Notification(
 							android.R.drawable.ic_notification_overlay,
@@ -142,16 +147,11 @@ public class MainActivity extends Activity {
 		return dialog;
 	}
 
-	void refreshList() {
-		Database db = Database.getInstance();
-		if(db == null) {
-			Log.e("refreshList", "The database is not initialized");
-			return;
-		}
+	void refreshSelectedList() {
+		//TabHost tabHost = (TabHost) this.findViewById(R.id.serie_group_list);
 
-		ListView view = (ListView) this.findViewById(R.id.serie_list);
-		assert view != null;
-		view.setAdapter(db.adapterSerie(this));
+		//tabHost.get
+		//ListView 
 	}
 
 	@Override
@@ -165,20 +165,24 @@ public class MainActivity extends Activity {
 		//this.findViewById(R.layout.main)
 		//	.setBackgroundDrawable(android.R.drawable.screen_background_dark);
 
-		this.refreshList();
-		ListView view = (ListView) this.findViewById(R.id.serie_list);
-		view.setOnItemClickListener(new OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> parent, View v, int pos, long id) {
-				Serie s = (Serie) parent.getItemAtPosition(pos);
-				Intent intent = new Intent(
-					MainActivity.this.getApplication(),
-					ChapterActivity.class
-				);
-				intent.putExtra("serie_id", s.id);
-				MainActivity.this.startActivity(intent);
-			}
-		});
+		//this.refreshLists();
+
+		ArrayList<SerieGroup> groups = Database.getInstance().getSerieGroups(); 
+		TabHost tabHost = (TabHost) this.findViewById(R.id.serie_group_list);
+		tabHost.setup(MainActivity.this.getLocalActivityManager());
+		
+		for(int i = 0; i < groups.size(); i ++) {
+			SerieGroup group = groups.get(i);
+			Intent intent = new Intent(MainActivity.this, SerieGroupTab.class);
+			intent.putExtra("group", group.id);
+			Log.i("Groups", group.group);
+			//intent.
+			tabHost.addTab(
+				tabHost.newTabSpec("tab" + group.id)
+					.setIndicator(group.group)
+					.setContent(intent)
+			);
+		}
 
 		{
 			Button button = (Button) this.findViewById(R.id.add);

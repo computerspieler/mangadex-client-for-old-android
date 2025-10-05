@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 import fr.speilkoun.mangareader.utils.ISO8601DateParser;
@@ -40,8 +41,10 @@ public class Database {
             "CREATE TABLE IF NOT EXISTS serie_group (" +
                 "id INTEGER PRIMARY KEY NOT NULL," +
                 "name TEXT NOT NULL" +
-            ");" +
-            "INSERT INTO serie_group(id, name) VALUES (0, 'default')");
+            ");");
+        try {
+            mDB.execSQL("INSERT INTO serie_group(id, name) VALUES (0, 'default')");
+        } catch(SQLiteConstraintException e) {}
         mDB.execSQL(
             "CREATE TABLE IF NOT EXISTS serie (" +
                 "id INTEGER PRIMARY KEY NOT NULL," +
@@ -207,8 +210,8 @@ public class Database {
         cur.close();
     }
 
-    public synchronized SerieArray adapterSerie(Context ctx) {
-        Cursor cur = mDB.rawQuery("SELECT * FROM serie", null);
+    public synchronized SerieArray adapterSerie(Context ctx, int group) {
+        Cursor cur = mDB.rawQuery("SELECT * FROM serie WHERE group_id = ?", new String[] { ""+group });
         
         ArrayList<Serie> series = new ArrayList<Serie>(cur.getCount());
         for(int i = 0; i < cur.getCount(); i ++) {
@@ -277,4 +280,19 @@ public class Database {
         cur.close();
         return output;
 	}
+
+    public synchronized ArrayList<SerieGroup> getSerieGroups() {
+        Cursor cur = mDB.rawQuery("SELECT * FROM serie_group", null);
+        
+        ArrayList<SerieGroup> output = new ArrayList<SerieGroup>(cur.getCount());
+        for(int i = 0; i < cur.getCount(); i ++) {
+            cur.moveToPosition(i);
+            output.add(new SerieGroup(
+                cur.getInt(cur.getColumnIndex("id")),
+                cur.getString(cur.getColumnIndex("name"))
+            ));
+        }
+        
+        return output;
+    }
 }
