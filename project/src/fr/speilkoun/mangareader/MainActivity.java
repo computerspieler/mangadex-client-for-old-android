@@ -20,6 +20,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TextView;
+import android.widget.Toast;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Serie;
 import fr.speilkoun.mangareader.data.SerieArray;
@@ -148,10 +149,25 @@ public class MainActivity extends ActivityGroup {
 	}
 
 	void refreshSelectedList() {
-		//TabHost tabHost = (TabHost) this.findViewById(R.id.serie_group_list);
+		TabHost tabHost = (TabHost) this.findViewById(R.id.serie_group_list);
+		String tag = tabHost.getCurrentTabTag();
+		SerieGroupTab current_tab =
+			(SerieGroupTab) getLocalActivityManager()
+				.getActivity(tag);
+		
 
-		//tabHost.get
-		//ListView 
+		current_tab.refreshList();
+	}
+
+	void refreshSelectedListChapters() {
+		TabHost tabHost = (TabHost) this.findViewById(R.id.serie_group_list);
+		String tag = tabHost.getCurrentTabTag();
+		SerieGroupTab current_tab =
+			(SerieGroupTab) getLocalActivityManager()
+				.getActivity(tag);
+		
+
+		current_tab.refreshChapters();
 	}
 
 	@Override
@@ -176,7 +192,6 @@ public class MainActivity extends ActivityGroup {
 			Intent intent = new Intent(MainActivity.this, SerieGroupTab.class);
 			intent.putExtra("group", group.id);
 			Log.i("Groups", group.group);
-			//intent.
 			tabHost.addTab(
 				tabHost.newTabSpec("tab" + group.id)
 					.setIndicator(group.group)
@@ -188,11 +203,28 @@ public class MainActivity extends ActivityGroup {
 			Button button = (Button) this.findViewById(R.id.add);
 			button.setOnClickListener(new Button.OnClickListener() {
 				public void onClick(View v) {
-					Log.i("Button", "Clicked!");
 					MainActivity.this.showDialog(ADD_MANGA_DIALOG);
 				}
 			});
 		}
+		{
+			Button button = (Button) this.findViewById(R.id.refresh);
+			button.setOnClickListener(new Button.OnClickListener() {
+				public void onClick(View v) {
+					Toast.makeText(MainActivity.this, "Refreshing chapters", Toast.LENGTH_LONG)
+						.show();
+
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							MainActivity.this.refreshSelectedListChapters();
+						}
+					},
+					"refresh_serie").start();
+				}
+			});
+		}
+		
 		/*
 		String images = Mangadex.getChapterImages("a54c491c-8e4c-4e97-8873-5b79e59da210");
 		try {

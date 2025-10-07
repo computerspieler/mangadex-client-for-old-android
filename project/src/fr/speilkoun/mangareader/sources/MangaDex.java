@@ -120,7 +120,7 @@ public class MangaDex {
 		
 		int retry = 0, offset = db.getChapterCount(manga_db_idx);
 		
-		Log.i(TAG, "Downloading chapters of " + s.id);
+		Log.i(TAG, "Downloading chapters of " + s.id + " \"" + s.title + "\"");
 		while(true) {
 			String resp = MangaDex.getChapters(id, offset);
 			
