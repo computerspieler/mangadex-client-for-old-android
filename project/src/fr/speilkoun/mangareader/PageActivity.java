@@ -7,6 +7,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnTouchListener;
 import android.widget.ImageView;
 import android.widget.Toast;
 import fr.speilkoun.mangareader.data.Database;
@@ -23,6 +26,8 @@ public class PageActivity extends Activity {
     Bitmap prev_image = null;
     Bitmap current_image = null;
     Bitmap next_image = null;
+
+    static final boolean LOAD_AND_KEEP_NEIGHBORS = false;
 
     Bitmap load_page(int page) {
         if(page < 0 || page >= pages.size())
@@ -54,15 +59,20 @@ public class PageActivity extends Activity {
             prev_image = null;
         }
 
+        System.gc();
+
         current_page_idx = new_page_idx;
 
-        if(prev_image == null)
-            prev_image = load_page(current_page_idx - 1);
         if(current_image == null)
             current_image = load_page(current_page_idx);
-        if(next_image == null)
-            next_image = load_page(current_page_idx + 1);
-        
+
+        if(LOAD_AND_KEEP_NEIGHBORS) {
+            if(prev_image == null)
+                prev_image = load_page(current_page_idx - 1);
+            if(next_image == null)
+                next_image = load_page(current_page_idx + 1);
+        }
+
         if(current_image != null)
             page_view.setImageBitmap(current_image);
     }
@@ -88,5 +98,20 @@ public class PageActivity extends Activity {
 
         Log.i(TAG, "We survived ! " + pages.size());
         this.set_current_page(0);
+
+        this.page_view.setOnTouchListener(new OnTouchListener() {
+
+            @Override
+            public boolean onTouch(View v, MotionEvent ev) {
+                float portionX = ev.getX() / v.getWidth();
+                if(portionX >= .66)
+                    PageActivity.this.set_current_page(PageActivity.this.current_page_idx + 1);
+                if(portionX <= .33)
+                    PageActivity.this.set_current_page(PageActivity.this.current_page_idx - 1);
+                Log.i(TAG, ""+portionX);
+                return true;
+            }
+            
+        });
     }		
 }
