@@ -27,6 +27,7 @@ public class PageActivity extends Activity {
     Bitmap current_image = null;
     Bitmap next_image = null;
 
+    // TODO: Set this flag based on memory usage
     static final boolean LOAD_AND_KEEP_NEIGHBORS = false;
 
     Bitmap load_page(int page) {
@@ -40,16 +41,17 @@ public class PageActivity extends Activity {
         );
     }
 
+    @SuppressWarnings("unused")
     void set_current_page(int new_page_idx) {
         if(new_page_idx < 0 || new_page_idx >= pages.size())
             //TODO: Add a toast or change chapter ?
             return;
         
-        if(new_page_idx == current_page_idx+1) {
+        if(new_page_idx == current_page_idx+1 && LOAD_AND_KEEP_NEIGHBORS) {
             prev_image = current_image;
             current_image = next_image;
             next_image = null;
-        } else if(new_page_idx == current_page_idx-1) {
+        } else if(new_page_idx == current_page_idx-1 && LOAD_AND_KEEP_NEIGHBORS) {
             next_image = current_image;
             current_image = prev_image;
             prev_image = null;
@@ -73,8 +75,12 @@ public class PageActivity extends Activity {
                 next_image = load_page(current_page_idx + 1);
         }
 
-        if(current_image != null)
+        if(current_image != null) {
             page_view.setImageBitmap(current_image);
+            page_view.refreshDrawableState();
+            Log.i(TAG, current_page_idx + " " + pages.get(current_page_idx).file_id + " " + current_image.toString());
+        }
+            
     }
 
 	@Override
@@ -100,18 +106,19 @@ public class PageActivity extends Activity {
         this.set_current_page(0);
 
         this.page_view.setOnTouchListener(new OnTouchListener() {
-
             @Override
             public boolean onTouch(View v, MotionEvent ev) {
+                if(ev.getAction() != MotionEvent.ACTION_UP)
+                    return true;
+                
                 float portionX = ev.getX() / v.getWidth();
                 if(portionX >= .66)
                     PageActivity.this.set_current_page(PageActivity.this.current_page_idx + 1);
                 if(portionX <= .33)
                     PageActivity.this.set_current_page(PageActivity.this.current_page_idx - 1);
-                Log.i(TAG, ""+portionX);
+                Log.i(TAG, ""+portionX + ": " + (portionX >= .66) + "; " + (portionX <= .33));
                 return true;
             }
-            
         });
     }		
 }

@@ -60,7 +60,7 @@ public class ChapterActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> parent, View v, int pos, long id) {
                 final Chapter c = (Chapter) parent.getItemAtPosition(pos);
-                if(!Database.getInstance().hasPages(c.chapter_id)) {
+                if(!Database.getInstance().hasPages(c.id)) {
                     try {
                         MangaDex.downloadChapter(ChapterActivity.this, c);
                     } catch (HTTPException e) {
