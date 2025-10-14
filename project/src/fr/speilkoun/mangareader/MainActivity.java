@@ -2,7 +2,6 @@ package fr.speilkoun.mangareader;
 
 import java.util.ArrayList;
 
-import android.app.Activity;
 import android.app.ActivityGroup;
 import android.app.Dialog;
 import android.app.Notification;
@@ -224,18 +223,5 @@ public class MainActivity extends ActivityGroup {
 				}
 			});
 		}
-		
-		/*
-		String images = Mangadex.getChapterImages("a54c491c-8e4c-4e97-8873-5b79e59da210");
-		try {
-			JSONTokener tokener = new JSONTokener(images);
-			String obj = new JSONObject(tokener).getString("baseUrl");
-			Log.d("mangadex", obj);
-		} catch(JSONException e) {
-			e.printStackTrace();
-		}
-		*/
 	}
-
-	
 }

@@ -7,4 +7,5 @@
     <string name="done">Done</string>
     <string name="cancel">Cancel</string>
     <string name="loading_serie">Loading manga</string>
+    <string name="empty_chapter_toast">You tried to load an empty chapter!</string>
 </resources>

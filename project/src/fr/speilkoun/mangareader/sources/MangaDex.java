@@ -15,6 +15,7 @@ import android.text.format.Time;
 import android.util.Log;
 
 import fr.speilkoun.mangareader.data.Database;
+import fr.speilkoun.mangareader.data.Page;
 import fr.speilkoun.mangareader.data.Chapter;
 import fr.speilkoun.mangareader.data.Serie;
 import fr.speilkoun.mangareader.utils.HTTP;
@@ -90,7 +91,7 @@ public class MangaDex {
 
 		String chapter_id = "";
 		try {
-			chapter_id = attrs.getString("id");
+			chapter_id = chapter.getString("id");
 		} catch(JSONException e) {}
 		
 		Database.getInstance().addChapter(
@@ -134,8 +135,7 @@ public class MangaDex {
 						Log.i(TAG, "Downloading chapter " + i);
 						parseAndAppendChapter(manga_db_idx, chapter);
 					} catch(JSONException e) {
-						Log.e(TAG, "Could not parse a chapter output for " + id + " n " + i);
-						e.printStackTrace();
+						Log.e(TAG, "Could not parse a chapter output for " + id + " n " + i, e);
 					}
 				}
 
@@ -144,8 +144,7 @@ public class MangaDex {
 				if(chapters.length() == 0)
 					break;
 			} catch(JSONException e) {
-				Log.e(TAG, "Could not parse all the chapters output for " + id);
-				e.printStackTrace();
+				Log.e(TAG, "Could not parse all the chapters output for " + id, e);
 				retry ++;
 				if(retry >= MAX_RETRIES)
 					break;
@@ -229,5 +228,41 @@ public class MangaDex {
 		MangaDex.loadChapters(id);
 
 		return output;
+	}
+
+	public static void downloadChapter(Context ctx, Chapter c)
+		throws HTTPException
+	{
+		Log.i(TAG, "Downloading a chapter: " + c.title + "(" + c.id + "," + c.custom_attributes + ")");
+		String images = getChapterImages(c.custom_attributes);
+		try {
+			JSONTokener tokener = new JSONTokener(images);
+			JSONObject obj = new JSONObject(tokener);
+
+			String base_url = obj.getString("baseUrl")
+				.replace("https://", "");
+			JSONObject chapters = obj.getJSONObject("chapter");
+			String chapter_hash = chapters.getString("hash");
+			String path_to_use = chapters.has("dataSaver") ?
+				"/data-saver/" : "/data/";
+			JSONArray pages = chapters.has("dataSaver") ?
+			 	chapters.getJSONArray("dataSaver") :
+				chapters.getJSONArray("data");
+			
+			for(int i = 0; i < pages.length(); i ++) {
+				String filename = pages.getString(i);
+				Log.i(TAG, "Loading page " + (i+1) + "/" + pages.length() + ": " + filename);
+				long file_idx = HTTP.downloadFileAndAddToDatabase(ctx,
+					filename,
+					base_url, path_to_use + chapter_hash + "/" + filename
+				);
+
+				Database.getInstance().addPage(
+					new Page(i, c.id, (int) file_idx)
+				);
+			}
+		} catch(JSONException e) {
+			Log.e(TAG, "Could not load " + c.toString(), e);
+		}
 	}
 }

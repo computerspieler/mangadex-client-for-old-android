@@ -55,7 +55,7 @@ public class SerieGroupTab extends ListActivity {
                         ChapterActivity.class
                     );
                     intent.putExtra("serie_id", s.id);
-                    SerieGroupTab.this.getParent().startActivity(intent);
+                    SerieGroupTab.this.startActivity(intent);
                 }
             });
     }

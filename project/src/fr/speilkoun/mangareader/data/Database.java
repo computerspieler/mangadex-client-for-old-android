@@ -58,7 +58,8 @@ public class Database {
                 "FOREIGN KEY(cover_image_id) REFERENCES files(id)" +
                 "FOREIGN KEY(group_id) REFERENCES serie_group(id)" +
             ");");
-        mDB.execSQL("CREATE TABLE IF NOT EXISTS chapter (" +
+        mDB.execSQL(
+            "CREATE TABLE IF NOT EXISTS chapter (" +
                 "id INTEGER PRIMARY KEY NOT NULL," +
                 "serie_id INTEGER," +
 
@@ -71,7 +72,8 @@ public class Database {
 
                 "FOREIGN KEY(serie_id) REFERENCES serie(id)" +
             ");");
-        mDB.execSQL("CREATE TABLE IF NOT EXISTS pages (" +
+        mDB.execSQL(
+            "CREATE TABLE IF NOT EXISTS pages (" +
                 "chapter_id INTEGER NOT NULL," +
                 "file_id INTEGER," +
                 "page INTEGER NOT NULL," +
@@ -294,5 +296,36 @@ public class Database {
         }
         
         return output;
+    }
+
+    public synchronized void addPage(Page p) {
+        mDB.insertOrThrow("pages", null, p.getContentValues());
+    }
+
+    synchronized Cursor getPagesCursor(int chapter_id) {
+        return mDB.rawQuery(
+            "SELECT * FROM pages WHERE chapter_id=? ORDER BY page",
+            new String[] { "" + chapter_id }
+        );
+    }
+
+    public synchronized boolean hasPages(int chapter_id) {
+        return getPagesCursor(chapter_id).getCount() > 0;
+    }
+
+    public synchronized ArrayList<Page> getPages(int chapter_id) {
+        Cursor cur = getPagesCursor(chapter_id);
+
+        ArrayList<Page> pages = new ArrayList<Page>(cur.getCount());
+        for(int i = 0; i < cur.getCount(); i ++) {
+            cur.moveToPosition(i);
+            pages.add(new Page(
+                cur.getInt(cur.getColumnIndex("page")),
+                cur.getInt(cur.getColumnIndex("chapter_id")),
+                cur.getInt(cur.getColumnIndex("file_id"))
+            ));
+        }
+
+        return pages;
     }
 }

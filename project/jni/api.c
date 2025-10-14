@@ -1,16 +1,18 @@
 #include "api.h"
 
 #include <assert.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <linux/socket.h>
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
 #define HTTPS_PORT "443"
 #define USER_AGENT "manga-reader-for-old-android"
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 16384
 
 #include <android/log.h>
 
@@ -20,6 +22,21 @@
 
 static char *BUFFER;
 static int INTERNAL_BUFFER_SIZE;
+
+int openssl_print_error_callback(const char * txt, size_t len, void *ctx) {
+    LOGE("%.*s", (int) len, txt);
+    return 1;
+}
+
+// From https://stackoverflow.com/questions/2670816/how-can-i-use-the-compile-time-constant-line-in-a-string
+#define STRINGIZE(x) STRINGIZE2(x)
+#define STRINGIZE2(x) #x
+#define LINE_STRING STRINGIZE(__LINE__)
+
+#define OPENSSL_LOG_ERROR() { \
+    LOGE("Got an OpenSSL error at " __FILE__ ":" LINE_STRING); \
+    ERR_print_errors_cb(openssl_print_error_callback, NULL); \
+}
 
 void init_api(void) {
     BUFFER = NULL;
@@ -69,46 +86,56 @@ int createContext(Context *ctx, const char *domain) {
 
 	ctx->ctx = SSL_CTX_new(method);
 	if (!ctx->ctx) {
-		ERR_print_errors_fp(stderr);
+		OPENSSL_LOG_ERROR();
 		return 1;
 	}
 
 	ctx->bio = BIO_new_ssl_connect(ctx->ctx);
 	if (!ctx->bio) {
-        ERR_print_errors_fp(stderr);
+        OPENSSL_LOG_ERROR();
         SSL_CTX_free(ctx->ctx);
         return 1;
     }
 
-	BIO_set_conn_hostname(ctx->bio, hostname_buffer);
+	if(BIO_set_conn_hostname(ctx->bio, hostname_buffer) <= 0) {
+        OPENSSL_LOG_ERROR();
+        SSL_CTX_free(ctx->ctx);
+        return 1;
+    }
+
+    if(BIO_set_conn_ip_family(ctx->bio, BIO_FAMILY_IPV4) <= 0) {
+        OPENSSL_LOG_ERROR();
+        SSL_CTX_free(ctx->ctx);
+        return 1;
+    }
 
 	BIO_get_ssl(ctx->bio, &ssl);
 	if(!ssl) {
-		LOGE("Can't get SSL pointer\n");
+        LOGE("Can't get SSL pointer\n");
+        OPENSSL_LOG_ERROR();
         freeContext(ctx);
         return 1;
 	}
 
-	if (!SSL_set_tlsext_host_name(ssl, domain)) {
-        ERR_print_errors_fp(stderr);
-        SSL_free(ssl);
-        SSL_CTX_free(ctx->ctx);
+	if (SSL_set_tlsext_host_name(ssl, domain) <= 0) {
+        OPENSSL_LOG_ERROR();
+        freeContext(ctx);
         return 1;
     }
 
 	if(BIO_do_connect(ctx->bio) <= 0) {
-		ERR_print_errors_fp(stderr);
+		OPENSSL_LOG_ERROR();
+        freeContext(ctx);
 		return 1;
 	}
 
 	if (BIO_do_handshake(ctx->bio) <= 0) {
-        ERR_print_errors_fp(stderr);
+        OPENSSL_LOG_ERROR();
         freeContext(ctx);
         return 1;
     }
 
     BIO_should_read(ctx->bio);
-
 	LOGI("Connected with %s encryption\n", SSL_get_cipher(ssl));
 
 	return 0;
@@ -138,7 +165,7 @@ int run_request_and_get_json(Context *ctx, const char* domain, const char *path)
         return -5;
 
     if(BIO_write(ctx->bio, buffer, bytes) < 0) {
-		ERR_print_errors_fp(stderr);
+		OPENSSL_LOG_ERROR();
         return -1;
     }
 
@@ -156,7 +183,7 @@ int run_request_and_get_json(Context *ctx, const char* domain, const char *path)
         return -error_code;
     }
     
-    body_start = strstr(buffer, "content-length: ");
+    body_start = strcasestr(buffer, "content-length: ");
     if(body_start) {
         body_start += strlen("content-length: ");
         sscanf(body_start, "%d", &output_size);
@@ -204,7 +231,7 @@ int run_request_and_get_json(Context *ctx, const char* domain, const char *path)
 
 int run_request_and_download_file(Context *ctx, FILE *f, const char *domain, const char *path)
 {
-    int bytes, initialised;
+    int bytes, initialised, output_size;
     size_t bytes_written;
     char buffer[BUFFER_SIZE+1];
     char *body_start;
@@ -218,18 +245,35 @@ int run_request_and_download_file(Context *ctx, FILE *f, const char *domain, con
     );
 
     if(BIO_write(ctx->bio, buffer, bytes) < 0) {
-		ERR_print_errors_fp(stderr);
+		OPENSSL_LOG_ERROR();
         return -1;
     }
 
     initialised = 0;
     bytes_written = 0;
-    while ((bytes = BIO_read(ctx->bio, buffer, BUFFER_SIZE)) > 0) {
-        
+    output_size = 1;
+    while ((output_size - bytes_written) > 0) {
+        bytes = BIO_read(ctx->bio, buffer, BUFFER_SIZE);
+        if(bytes == 0)
+            break;
+        if(bytes < 0) {
+            // TODO: Handle invalid writes
+        }
+
         // If this is the first read, then we must skip the html header
         if(!initialised) {
             initialised = 1;
+            output_size = INT32_MAX;
 
+            body_start = strcasestr(buffer, "content-length: ");
+            if(body_start) {
+                body_start += strlen("content-length: ");
+                sscanf(body_start, "%d", &output_size);
+                LOGI("Found content-length: %d", output_size);
+            } else
+                body_start = buffer;
+            
+            LOGI("%s", buffer);
             body_start = strstr(buffer, "\r\n\r\n");
             assert(body_start);
 
@@ -245,5 +289,6 @@ int run_request_and_download_file(Context *ctx, FILE *f, const char *domain, con
             continue;
         // TODO: Handle invalid writes
     }
+    
     return (int) bytes_written;
 }

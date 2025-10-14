@@ -53,6 +53,4 @@ public class Serie {
 
         return output;
     }
-
-    
 }

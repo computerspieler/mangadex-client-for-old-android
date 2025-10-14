@@ -54,17 +54,20 @@ Java_fr_speilkoun_mangareader_utils_HTTP_rawDownloadFile(
     if(!f) {
         LOGE("Could not open the output path: %s", strerror(errno));
 		THROW_HTTP_EXCEPTION(env, "Unable to open the desired file");
-    }
+    } else
+		LOGI("%s is opened", (*env)->GetStringUTFChars(env, output_path, 0));
 
 	raw_domain = (*env)->GetStringUTFChars(env, domain, 0);
-	createContext(&ctx, raw_domain);
-    
-    output = run_request_and_download_file(&ctx, f,
-        raw_domain,
-        (*env)->GetStringUTFChars(env, path, 0)
-    );
+	output = -createContext(&ctx, raw_domain);
+	if(!output) {
+		LOGI("Create context suceeded");
+		output = run_request_and_download_file(&ctx, f,
+			raw_domain,
+			(*env)->GetStringUTFChars(env, path, 0)
+		);
+		freeContext(&ctx);
+	}
 
-	freeContext(&ctx);
 	fclose(f);
 	
 	if(output < 0) {
@@ -87,13 +90,15 @@ Java_fr_speilkoun_mangareader_utils_HTTP_getJSON(
 	const char *raw_domain;
 
 	raw_domain = (*env)->GetStringUTFChars(env, domain, 0);
-	createContext(&ctx, raw_domain);
+	output = -createContext(&ctx, raw_domain);
     
-    output = run_request_and_get_json(&ctx,
-        raw_domain,
-        (*env)->GetStringUTFChars(env, path, 0)
-    );
-	freeContext(&ctx);
+	if(!output) {
+		output = run_request_and_get_json(&ctx,
+			raw_domain,
+			(*env)->GetStringUTFChars(env, path, 0)
+		);
+		freeContext(&ctx);
+	}
 
 	if(output < 0) {
 		LOGE("Received this error code from run_request_and_get_json: %d\n", output);
