@@ -3,9 +3,9 @@ package fr.speilkoun.mangareader.data;
 import android.content.ContentValues;
 
 public class Page {
-    int page;
-    int chapter_id;
-    Integer file_id;
+    public int page;
+    public int chapter_id;
+    public Integer file_id;
 
     public Page(
         int page,
