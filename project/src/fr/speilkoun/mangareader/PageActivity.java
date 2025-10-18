@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -120,5 +121,31 @@ public class PageActivity extends Activity {
                 return true;
             }
         });
+
+        this.page_view.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent ev) {
+                if(ev.getAction() != KeyEvent.ACTION_UP)
+                    return true;
+                
+                switch(keyCode) {
+                case KeyEvent.KEYCODE_DPAD_LEFT:
+                case KeyEvent.KEYCODE_SOFT_LEFT:
+                    PageActivity.this.set_current_page(PageActivity.this.current_page_idx - 1);
+                    break;
+                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                case KeyEvent.KEYCODE_SOFT_RIGHT:
+                    PageActivity.this.set_current_page(PageActivity.this.current_page_idx + 1);
+                    break;
+                case KeyEvent.KEYCODE_BACK:
+                    PageActivity.this.finish();
+                    break;
+                default: break;
+                }
+                return true;
+            }
+        });
+
+        this.page_view.setFocusableInTouchMode(true);
     }		
 }
