@@ -1,6 +1,9 @@
-project/bin/
-project/libs/
-project/gen/
-openssl
+/project/bin/
+/project/libs/
+/project/gen/
+/project/jni/openssl/
+/openssl
+/jpeg-9f
 .vscode
 .clangd
+*.tar.gz
