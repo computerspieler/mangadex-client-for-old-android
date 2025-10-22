@@ -19,7 +19,9 @@ cd openssl
 make
 make install_sw install_ssldirs
 mkdir -p $PREFIX/../../libs/armeabi/
-cp $PREFIX/lib/libssl.so $PREFIX/lib/libcrypto.so $PREFIX/../../libs/armeabi/
+mv $PREFIX/lib/libssl.so $PREFIX/lib/libssl-custom.so
+mv $PREFIX/lib/libcrypto.so $PREFIX/lib/libcrypto-custom.so
+cp $PREFIX/lib/libssl-custom.so $PREFIX/lib/libcrypto-custom.so $PREFIX/../../libs/armeabi/
 ```
 
 ### libjpeg

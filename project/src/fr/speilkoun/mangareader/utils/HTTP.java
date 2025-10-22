@@ -42,6 +42,12 @@ public class HTTP {
     }
 
 	static {
+        /* 
+         * The order of these lines is important
+         * and should not be tempered with
+         */
+        System.loadLibrary("crypto-custom");
+        System.loadLibrary("ssl-custom");
         System.loadLibrary("http-parser");
     }
 }

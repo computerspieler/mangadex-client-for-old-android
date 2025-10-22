@@ -1,6 +1,6 @@
 diff -ur openssl-3.5.4/Configurations/15-android.conf openssl/Configurations/15-android.conf
 --- openssl-3.5.4/Configurations/15-android.conf	2025-09-30 14:37:40.000000000 +0200
-+++ openssl/Configurations/15-android.conf	2025-10-19 14:39:31.662476518 +0200
++++ openssl/Configurations/15-android.conf	2025-10-22 17:45:59.958630131 +0200
 @@ -8,7 +8,7 @@
  
      my $android_ndk = {};
@@ -28,6 +28,26 @@ diff -ur openssl-3.5.4/Configurations/15-android.conf openssl/Configurations/15-
                  bn_ops   => $arch =~ m/64$/ ? "SIXTY_FOUR_BIT_LONG"
                                              : "BN_LLONG",
              };
+@@ -189,8 +189,9 @@
+         cppflags         => add(sub { android_ndk()->{cppflags} }),
+         cxxflags         => add(sub { android_ndk()->{cflags} }),
+         bn_ops           => sub { android_ndk()->{bn_ops} },
+-        bin_cflags       => "-fPIE",
+-        bin_lflags       => "-pie",
++        lflags           => add("-lc"),
++        bin_cflags       => add("-fPIE"),
++        bin_lflags       => add("-pie"),
+         enable           => [ ],
+         shared_extension => ".so",
+     },
+@@ -225,6 +226,7 @@
+         inherit_from     => [ "android" ],
+         bn_ops           => add("RC4_CHAR"),
+         asm_arch         => 'armv4',
++        shared_ldflag    => add_before("-shared"),
+         perlasm_scheme   => "void",
+     },
+     "android-arm64" => {
 diff -ur openssl-3.5.4/crypto/bio/bss_dgram.c openssl/crypto/bio/bss_dgram.c
 --- openssl-3.5.4/crypto/bio/bss_dgram.c	2025-09-30 14:37:40.000000000 +0200
 +++ openssl/crypto/bio/bss_dgram.c	2025-10-19 14:40:55.442475877 +0200
