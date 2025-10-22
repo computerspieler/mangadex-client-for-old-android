@@ -24,12 +24,6 @@ public class PageActivity extends Activity {
     ArrayList<Page> pages;
 
     int current_page_idx = 0;
-    Bitmap prev_image = null;
-    Bitmap current_image = null;
-    Bitmap next_image = null;
-
-    // TODO: Set this flag based on memory usage
-    static final boolean LOAD_AND_KEEP_NEIGHBORS = false;
 
     Bitmap load_page(int page) {
         if(page < 0 || page >= pages.size())
@@ -48,40 +42,13 @@ public class PageActivity extends Activity {
             //TODO: Add a toast or change chapter ?
             return;
         
-        if(new_page_idx == current_page_idx+1 && LOAD_AND_KEEP_NEIGHBORS) {
-            prev_image = current_image;
-            current_image = next_image;
-            next_image = null;
-        } else if(new_page_idx == current_page_idx-1 && LOAD_AND_KEEP_NEIGHBORS) {
-            next_image = current_image;
-            current_image = prev_image;
-            prev_image = null;
-        } else {
-            next_image = null;
-            current_image = null;
-            prev_image = null;
-        }
-
         System.gc();
 
         current_page_idx = new_page_idx;
-
-        if(current_image == null)
-            current_image = load_page(current_page_idx);
-
-        if(LOAD_AND_KEEP_NEIGHBORS) {
-            if(prev_image == null)
-                prev_image = load_page(current_page_idx - 1);
-            if(next_image == null)
-                next_image = load_page(current_page_idx + 1);
-        }
-
-        if(current_image != null) {
-            page_view.setImageBitmap(current_image);
-            page_view.refreshDrawableState();
-            Log.i(TAG, current_page_idx + " " + pages.get(current_page_idx).file_id + " " + current_image.toString());
-        }
-            
+        
+        Bitmap current_image = load_page(current_page_idx);
+        page_view.setImageBitmap(current_image);
+        page_view.refreshDrawableState();
     }
 
 	@Override
