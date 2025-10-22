@@ -20,6 +20,8 @@ import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
+import fr.speilkoun.mangareader.actions.ActionQueue;
+import fr.speilkoun.mangareader.actions.RefreshChapterAction;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Serie;
 import fr.speilkoun.mangareader.data.SerieArray;
@@ -115,21 +117,7 @@ public class MainActivity extends ActivityGroup {
 						final int notif_id = 1;
 						nm.notify(notif_id, notification);
 						
-						new Thread(new Runnable() {
-							@Override
-							public void run() {
-								try {
-									MangaDex.loadChapters(s.attribute);
-								} catch(Exception e) {
-									Log.e("onItemClick",
-										"Unable to load chapters: " + e.getClass().getCanonicalName(),
-										e);
-								}
-								nm.cancel(notif_id);
-							}
-						},
-						"load_" + s.id).start();
-						
+						ActionQueue.sendAction(new RefreshChapterAction(s));						
 						dialog.dismiss();
 					}
 				});
@@ -212,14 +200,7 @@ public class MainActivity extends ActivityGroup {
 				public void onClick(View v) {
 					Toast.makeText(MainActivity.this, "Refreshing chapters", Toast.LENGTH_LONG)
 						.show();
-
-					new Thread(new Runnable() {
-						@Override
-						public void run() {
-							MainActivity.this.refreshSelectedListChapters();
-						}
-					},
-					"refresh_serie").start();
+					MainActivity.this.refreshSelectedListChapters();
 				}
 			});
 		}

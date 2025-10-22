@@ -10,11 +10,12 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
+import fr.speilkoun.mangareader.actions.ActionQueue;
+import fr.speilkoun.mangareader.actions.DownloadChapterAction;
+import fr.speilkoun.mangareader.actions.RefreshChapterAction;
 import fr.speilkoun.mangareader.data.Chapter;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Serie;
-import fr.speilkoun.mangareader.sources.MangaDex;
-import fr.speilkoun.mangareader.utils.HTTPException;
 
 public class ChapterActivity extends Activity {
     static String TAG = "ChapterActivity";
@@ -26,14 +27,21 @@ public class ChapterActivity extends Activity {
 	}
 
     void refreshChapters() {
-        try {
-            MangaDex.loadChapters(mSerie.attribute);
-            this.refreshList();
-        } catch (HTTPException e) {
-            Toast.makeText(this, "Could not refresh", Toast.LENGTH_LONG)
-                .show();
-            Log.e(TAG, "Could not refresh: ", e);
-        }
+        ActionQueue.sendAction(new RefreshChapterAction(mSerie) {
+            @Override
+            public void onSuccess(Serie s)
+            { ChapterActivity.this.refreshList(); }
+
+            @Override
+            public void onFailure(Serie s) {
+                Toast.makeText(
+                    ChapterActivity.this,
+                    "Could not refresh",
+                    Toast.LENGTH_LONG
+                )
+                    .show();
+            }
+        });
     }
 
 	@Override
@@ -61,19 +69,36 @@ public class ChapterActivity extends Activity {
             public void onItemClick(AdapterView<?> parent, View v, int pos, long id) {
                 final Chapter c = (Chapter) parent.getItemAtPosition(pos);
                 if(!Database.getInstance().hasPages(c.id)) {
-                    try {
-                        MangaDex.downloadChapter(ChapterActivity.this, c);
-                    } catch (HTTPException e) {
-                        Log.e(TAG, "Could not download the chapter", e);
-                    }
-                }
+                    ActionQueue.sendAction(
+                        new DownloadChapterAction(ChapterActivity.this, c) {
+                            @Override
+                            public void onSuccess(Chapter c) {
+                                Intent intent = new Intent(
+                                    ChapterActivity.this.getApplication(),
+                                    PageActivity.class
+                                );
+                                intent.putExtra("chapter_id", c.id);
+                                ChapterActivity.this.startActivity(intent);
+                            }
 
-                Intent intent = new Intent(
-                    ChapterActivity.this.getApplication(),
-                    PageActivity.class
-                );
-                intent.putExtra("chapter_id", c.id);
-                ChapterActivity.this.startActivity(intent);
+                            @Override
+                            public void onFailure(Chapter c) {
+                                Toast.makeText(
+                                    ChapterActivity.this.getApplicationContext(), 
+                                    "Could not download this chapter",
+                                    Toast.LENGTH_LONG
+                                ).show();
+                            }
+                        }
+                    );
+                } else {
+                    Intent intent = new Intent(
+                        ChapterActivity.this.getApplication(),
+                        PageActivity.class
+                    );
+                    intent.putExtra("chapter_id", c.id);
+                    ChapterActivity.this.startActivity(intent);
+                }
             }
         });
     }

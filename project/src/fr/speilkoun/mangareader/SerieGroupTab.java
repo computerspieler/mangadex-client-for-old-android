@@ -7,10 +7,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import fr.speilkoun.mangareader.actions.ActionQueue;
+import fr.speilkoun.mangareader.actions.RefreshChapterAction;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Serie;
-import fr.speilkoun.mangareader.sources.MangaDex;
-import fr.speilkoun.mangareader.utils.HTTPException;
 
 public class SerieGroupTab extends ListActivity {
     
@@ -30,11 +30,7 @@ public class SerieGroupTab extends ListActivity {
     void refreshChapters() {
         for(int i = 0; i < this.getListAdapter().getCount(); i ++) {
             Serie s = (Serie) this.getListAdapter().getItem(i);
-            try {
-                MangaDex.loadChapters(s.attribute);
-            } catch(HTTPException e) {
-                Log.e(TAG, "Unable to refresh \"" + s.title + "\"", e);
-            }
+            ActionQueue.sendAction(new RefreshChapterAction(s));
         }
     }
 
