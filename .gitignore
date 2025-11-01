@@ -1,8 +1,8 @@
-/project/bin/
-/project/libs/
-/project/gen/
-/project/jni/openssl/
-/project/obj
+/bin/
+/libs/
+/gen/
+/jni/openssl/
+/obj
 /openssl
 /jpeg-9f
 .vscode

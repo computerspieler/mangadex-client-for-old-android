@@ -1,6 +1,7 @@
 # How to build this app
-First, clone [this repository and retrieve the android-1.6_r1 branch](https://github.com/computerspieler/docker-build-env/tree/android-1.6_r1), and follow the instructions in the `README.md` file.
+First, clone [this repository and retrieve the android-1.6_r1-improved branch](https://github.com/computerspieler/docker-build-env/tree/android-1.6_r1-improved), and follow the instructions in the `README.md` file.
 
+## Build the 3rd party dependancies
 Then, to create and run the build environment for the dependancies:
 ```bash
 docker build -t android-1.6-ssl .
@@ -14,14 +15,11 @@ First, download **OpenSSL 3.5.4**, and apply the `openssl.patch`.
 Then, start the build environment as shown above, and run the following commands:
 
 ```bash
-cd openssl
+cd <THE_NAME_OF_YOUR_OPENSSL_FOLDER>
+patch -p1 --merge -i ../openssl.patch
 ./Configure --prefix=$PREFIX no-threads no-autoload-config no-tests no-jitter no-seed no-idea no-bf no-cast no-md2 no-asm android-arm --debug -march=armv4t
 make
 make install_sw install_ssldirs
-mkdir -p $PREFIX/../../libs/armeabi/
-mv $PREFIX/lib/libssl.so $PREFIX/lib/libssl-custom.so
-mv $PREFIX/lib/libcrypto.so $PREFIX/lib/libcrypto-custom.so
-cp $PREFIX/lib/libssl-custom.so $PREFIX/lib/libcrypto-custom.so $PREFIX/../../libs/armeabi/
 ```
 
 ### libjpeg
@@ -29,7 +27,7 @@ Thanks to: https://warpedtimes.wordpress.com/2010/02/03/building-open-source-lib
 
 ```bash
 cd jpeg-9f
-./configure --host=arm-eabi --prefix=$PREFIX -disable-libtool-lock CFLAGS="-nostdlib" LIBS="-lc -lm" LDFLAGS="-Wl,-rpath-link=/opt/ndk/build/platforms/android-4/arch-arm/usr/lib/ -L/opt/ndk/build/platforms/android-4/arch-arm/usr/lib" CPP=/opt/ndk/build/prebuilt/linux-x86/arm-eabi-4.2.1/bin/arm-eabi-cpp CPPFLAGS="-I/opt/ndk/build/platforms/android-4/arch-arm/usr/include"
+./configure --host=arm-linux-androideabi --prefix=$PREFIX -disable-libtool-lock CFLAGS="-nostdlib" LIBS="-lc -lm" LDFLAGS="-Wl,-rpath-link=/opt/ndk/platforms/android-4/arch-arm/usr/lib/ -L/opt/ndk/platforms/android-4/arch-arm/usr/lib" CPP="arm-linux-androideabi-cpp" CPPFLAGS="-I/opt/ndk/platforms/android-4/arch-arm/usr/include"
 make
 make install
 ```
@@ -45,7 +43,7 @@ or you can run the commands manually as follows:
 docker run -v .:/opt/ndk/apps/prj -i -t android-1.6 -c 'build prj debug'
 
 # This is to install it
-adb install -r project/bin/MainActivity-debug.apk
+adb install -r bin/MainActivity-debug.apk
 ```
 
-As you might have guessed, the output apk is stored in `{root_of_repository}/project/bin/`.
+As you might have guessed, the output apk is stored in `{root_of_repository}/bin/`.

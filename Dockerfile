@@ -1,14 +1,14 @@
 FROM android-1.6:latest
 
 USER root
-RUN apt install -y perl
+RUN apt install -y perl patch
 
 USER user
 ENV ANDROID_NDK_ROOT $NDKROOT
-ENV PATH $PATH:/opt/ndk/build/prebuilt/linux-x86/arm-eabi-4.2.1/bin/
+ENV PATH $PATH:$NDKROOT/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/bin
 WORKDIR /opt/ndk/apps/prj
 
-ENV CROSS_SYSROOT /opt/ndk/build/platforms/android-4/arch-arm
-ENV PREFIX /opt/ndk/apps/prj/project/jni/openssl
+ENV CROSS_SYSROOT $NDKROOT/platforms/android-4/arch-arm
+ENV PREFIX /opt/ndk/apps/prj/jni/openssl
 
-ENTRYPOINT ["/bin/bash", "-c"]
+ENTRYPOINT ["/bin/bash"]
