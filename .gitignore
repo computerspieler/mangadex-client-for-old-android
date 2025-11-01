@@ -2,6 +2,7 @@
 /project/libs/
 /project/gen/
 /project/jni/openssl/
+/project/obj
 /openssl
 /jpeg-9f
 .vscode

@@ -13,15 +13,6 @@ public class ActionQueue implements Runnable {
         queue = new LinkedBlockingQueue<Action>();
     }
 
-    public static void sendAction(Action a)
-    {
-        try {
-            INSTANCE.queue.put(a);
-        } catch (InterruptedException e) {
-            Log.e(TAG, "", e);
-        }
-    }
-
     @Override
     public void run() {
         while (true) {
@@ -38,13 +29,22 @@ public class ActionQueue implements Runnable {
         }
     }
 
-    static ActionQueue INSTANCE;
-    public static ActionQueue getInstance()
-    { return INSTANCE; }
+    static ActionQueue INSTANCE = null;
+    public static ActionQueue getInstance() {
+        if(INSTANCE == null) {
+            INSTANCE = new ActionQueue();
+            Thread thread = new Thread(INSTANCE, "message_queue");
+            thread.start();
+        }
+        return INSTANCE;
+    }
 
+    public static void sendAction(Action a)
     {
-        INSTANCE = new ActionQueue();
-        Thread thread = new Thread(INSTANCE, "message_queue");
-        thread.start();
+        try {
+            getInstance().queue.put(a);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "", e);
+        }
     }
 }
