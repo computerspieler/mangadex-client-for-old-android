@@ -5,25 +5,90 @@ import java.util.ArrayList;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Page;
 
 public class PageActivity extends Activity {
+    class OnImageTouchListener implements OnTouchListener {
+        final String TAG = "OnImageTouchListener";
+
+        PageActivity parent;
+
+        float drag_x, drag_y;
+        boolean on_drag = false;
+
+        public OnImageTouchListener(PageActivity parent) {
+            this.parent = parent;
+        }
+
+        @Override
+        public boolean onTouch(View v, MotionEvent ev) {
+            switch(ev.getAction()) {
+            case MotionEvent.ACTION_UP:
+                // Ignore page switching when zoomed in
+                // to avoid issues        
+                if(parent.zoom == DEFAULT_ZOOM) {
+                    float portionX = ev.getX() / v.getWidth();
+                    if(portionX >= .66)
+                        parent.set_current_page(parent.current_page_idx + 1);
+                    if(portionX <= .33)
+                        parent.set_current_page(parent.current_page_idx - 1);
+                    Log.i(TAG, ""+portionX + ": " + (portionX >= .66) + "; " + (portionX <= .33));
+                } else if(on_drag)
+                    on_drag = false;
+                break;
+
+            case MotionEvent.ACTION_DOWN:
+                if(parent.zoom == DEFAULT_ZOOM)
+                    break;
+                
+                on_drag = true;
+                drag_x = ev.getX();
+                drag_y = ev.getY();
+                break;
+            
+            case MotionEvent.ACTION_MOVE:
+                parent.image_matrix.postTranslate(
+                    ev.getX() - drag_x,
+                    ev.getY() - drag_y
+                );
+                parent.updateImageMatrix();
+
+                drag_x = ev.getX();
+                drag_y = ev.getY();
+                break;
+            
+            default:
+                break;
+            }
+            return true;
+        }
+    }
+
     static final String TAG = "PageActivity";
 
     ImageView page_view;
 
     ArrayList<Page> pages;
 
+    final int ZOOM_INCREMENT = 20;
+    final int DEFAULT_ZOOM = 100;
+
+    int zoom = DEFAULT_ZOOM;
     int current_page_idx = 0;
+    Matrix image_matrix = new Matrix();
+    Bitmap current_image;
 
     Bitmap load_page(int page) {
         if(page < 0 || page >= pages.size())
@@ -42,20 +107,75 @@ public class PageActivity extends Activity {
             //TODO: Add a toast or change chapter ?
             return;
         
+        current_image = null;
         page_view.setImageBitmap(null);
         page_view.refreshDrawableState();
         System.gc();
 
         current_page_idx = new_page_idx;
-        
-        Bitmap current_image = load_page(current_page_idx);
+
+        current_image = load_page(current_page_idx);
         page_view.setImageBitmap(current_image);
         page_view.refreshDrawableState();
+
+        resetZoom();
+    }
+
+    void resetZoom() {
+        if(current_image == null)
+            return;
+        zoom = DEFAULT_ZOOM;
+
+        float image_width_scale = (float) page_view.getWidth() / (float) current_image.getWidth();
+        float image_height_scale = (float) page_view.getHeight() / (float) current_image.getHeight();
+        float image_scale = Math.min(image_width_scale, image_height_scale);
+
+        image_matrix.reset();
+        image_matrix.postScale(image_scale, image_scale);
+        this.updateImageMatrix();
+    }
+
+    void updateImageMatrix() {
+        page_view.setImageMatrix(image_matrix);
+    }
+
+    void addZoom(int zoom_increment) {
+        int new_zoom = Math.max(zoom + zoom_increment, DEFAULT_ZOOM);
+
+        if(new_zoom == DEFAULT_ZOOM) {
+            resetZoom();
+            return;
+        }
+
+        float scale = (float) new_zoom / (float) zoom;
+        zoom = new_zoom;
+        image_matrix.postScale(scale, scale);
+        this.updateImageMatrix();
+    }
+
+    void initZoomButtons() {
+        Button zoomIn = (Button) findViewById(R.id.currentPageZoomIn);
+        zoomIn.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PageActivity.this.addZoom(ZOOM_INCREMENT);
+            }
+        });
+
+        Button zoomOut = (Button) findViewById(R.id.currentPageZoomOut);
+        zoomOut.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PageActivity.this.addZoom(-ZOOM_INCREMENT);
+            }
+        });
     }
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+        this.setContentView(R.layout.page_activity);
 
         int chapter_id = getIntent().getExtras().getInt("chapter_id");
         this.pages = Database.getInstance().getPages(chapter_id);
@@ -69,27 +189,20 @@ public class PageActivity extends Activity {
             return;
         }
 
-        page_view = new ImageView(this);
-        this.setContentView(page_view);
-
-        Log.i(TAG, "We survived ! " + pages.size());
-        this.set_current_page(0);
-
-        this.page_view.setOnTouchListener(new OnTouchListener() {
+        page_view = (ImageView) this.findViewById(R.id.currentPageImage);
+        page_view.setScaleType(ImageView.ScaleType.MATRIX);
+        // We do this to wait until the imageview size is defined to reset
+        // the matrix
+        page_view.post(new Runnable() {
             @Override
-            public boolean onTouch(View v, MotionEvent ev) {
-                if(ev.getAction() != MotionEvent.ACTION_UP)
-                    return true;
-                
-                float portionX = ev.getX() / v.getWidth();
-                if(portionX >= .66)
-                    PageActivity.this.set_current_page(PageActivity.this.current_page_idx + 1);
-                if(portionX <= .33)
-                    PageActivity.this.set_current_page(PageActivity.this.current_page_idx - 1);
-                Log.i(TAG, ""+portionX + ": " + (portionX >= .66) + "; " + (portionX <= .33));
-                return true;
+            public void run() {
+                PageActivity.this.resetZoom();
             }
         });
+
+        this.set_current_page(0);
+
+        this.page_view.setOnTouchListener(new OnImageTouchListener(this));
 
         this.page_view.setOnKeyListener(new View.OnKeyListener() {
             @Override
@@ -116,5 +229,7 @@ public class PageActivity extends Activity {
         });
 
         this.page_view.setFocusableInTouchMode(true);
+
+        initZoomButtons();
     }		
 }
