@@ -28,7 +28,7 @@ public class PageActivity extends Activity {
     Bitmap load_page(int page) {
         if(page < 0 || page >= pages.size())
             return null;
-        
+
         
         return BitmapFactory.decodeFile(
             Database.getInstance()
@@ -42,6 +42,8 @@ public class PageActivity extends Activity {
             //TODO: Add a toast or change chapter ?
             return;
         
+        page_view.setImageBitmap(null);
+        page_view.refreshDrawableState();
         System.gc();
 
         current_page_idx = new_page_idx;

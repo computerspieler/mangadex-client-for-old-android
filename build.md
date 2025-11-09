@@ -11,7 +11,7 @@ docker run -v ".:/opt/ndk/apps/prj" -i -t android-1.6-ssl
 ### OpenSSL
 Thanks to: https://mta.openssl.org/pipermail/openssl-users/2022-June/015221.html
 
-First, download **OpenSSL 3.5.4**, and apply the `openssl.patch`.
+First, download **OpenSSL 3.5.4**, and extract it in a `openssl` folder within this project.
 Then, start the build environment as shown above, and run the following commands:
 
 ```bash
