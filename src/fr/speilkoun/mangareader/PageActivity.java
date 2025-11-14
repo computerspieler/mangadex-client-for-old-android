@@ -125,12 +125,21 @@ public class PageActivity extends Activity {
             return;
         zoom = DEFAULT_ZOOM;
 
-        float image_width_scale = (float) page_view.getWidth() / (float) current_image.getWidth();
-        float image_height_scale = (float) page_view.getHeight() / (float) current_image.getHeight();
+        float page_width  = (float) page_view.getWidth();
+        float page_height = (float) page_view.getHeight();
+        float image_width  = (float) current_image.getWidth();
+        float image_height = (float) current_image.getHeight();
+
+        float image_width_scale  = page_width  / image_width;
+        float image_height_scale = page_height / image_height;
         float image_scale = Math.min(image_width_scale, image_height_scale);
 
         image_matrix.reset();
         image_matrix.postScale(image_scale, image_scale);
+        image_matrix.postTranslate(
+            (page_width  - image_scale * image_width)  / 2.f,
+            (page_height - image_scale * image_height) / 2.f
+        );
         this.updateImageMatrix();
     }
 
@@ -147,8 +156,21 @@ public class PageActivity extends Activity {
         }
 
         float scale = (float) new_zoom / (float) zoom;
-        zoom = new_zoom;
+        
+        float center_page_width  = ((float) page_view.getWidth()) / 2.f;
+        float center_page_height = ((float) page_view.getHeight()) / 2.f;
+        
+        image_matrix.postTranslate(
+            -center_page_width,
+            -center_page_height
+        );
         image_matrix.postScale(scale, scale);
+        image_matrix.postTranslate(
+            center_page_width,
+            center_page_height
+        );
+
+        zoom = new_zoom;
         this.updateImageMatrix();
     }
 

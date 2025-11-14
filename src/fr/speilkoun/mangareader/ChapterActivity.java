@@ -3,6 +3,7 @@ package fr.speilkoun.mangareader;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -67,6 +68,8 @@ public class ChapterActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> parent, View v, int pos, long id) {
                 final Chapter c = (Chapter) parent.getItemAtPosition(pos);
+                Log.i(TAG, "Clicked on " + c.id);
+                
                 if(!Database.getInstance().hasPages(c.id)) {
                     ActionQueue.sendAction(
                         new DownloadChapterAction(ChapterActivity.this, c) {
