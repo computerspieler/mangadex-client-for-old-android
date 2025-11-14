@@ -239,7 +239,6 @@ public class Database {
         ArrayList<Chapter> chapters = new ArrayList<Chapter>(cur.getCount());
         for(int i = 0; i < cur.getCount(); i ++) {
             cur.moveToPosition(i);
-            Log.i(TAG, ""+cur.isNull(cur.getColumnIndex("title")));
             chapters.add(new Chapter(
                 cur.getInt(cur.getColumnIndex("id")),
                 cur.getInt(cur.getColumnIndex("serie_id")),

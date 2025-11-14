@@ -101,7 +101,6 @@ public class PageActivity extends Activity {
         );
     }
 
-    @SuppressWarnings("unused")
     void set_current_page(int new_page_idx) {
         if(new_page_idx < 0 || new_page_idx >= pages.size())
             //TODO: Add a toast or change chapter ?

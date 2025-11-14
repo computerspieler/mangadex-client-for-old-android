@@ -3,7 +3,6 @@ package fr.speilkoun.mangareader.data;
 import java.util.ArrayList;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,8 +26,6 @@ public class ChapterArray extends ArrayAdapter<Chapter> {
                 .inflate(R.layout.chapter_entry, parent, false);
         }
 
-        /* Do not remove the line below, as it increases stability */
-        Log.i(TAG, "Title: " + c.title);
         if(c.title != null) {
             TextView vTitle = (TextView) convertView.findViewById(R.id.cTitle);
             vTitle.setText(c.title);
