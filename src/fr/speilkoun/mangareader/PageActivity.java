@@ -13,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -147,8 +148,8 @@ public class PageActivity extends Activity {
         page_view.setImageMatrix(image_matrix);
     }
 
-    void addZoom(int zoom_increment) {
-        int new_zoom = Math.max(zoom + zoom_increment, DEFAULT_ZOOM);
+    void setZoom(int new_zoom) {
+        new_zoom = Math.max(new_zoom, DEFAULT_ZOOM);
 
         if(new_zoom == DEFAULT_ZOOM) {
             resetZoom();
@@ -179,7 +180,7 @@ public class PageActivity extends Activity {
         zoomIn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                PageActivity.this.addZoom(ZOOM_INCREMENT);
+                PageActivity.this.setZoom(PageActivity.this.zoom + ZOOM_INCREMENT);
             }
         });
 
@@ -187,7 +188,14 @@ public class PageActivity extends Activity {
         zoomOut.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                PageActivity.this.addZoom(-ZOOM_INCREMENT);
+                PageActivity.this.setZoom(PageActivity.this.zoom - ZOOM_INCREMENT);
+            }
+        });
+        zoomOut.setOnLongClickListener(new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                PageActivity.this.setZoom(DEFAULT_ZOOM);
+                return true;
             }
         });
     }
