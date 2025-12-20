@@ -31,25 +31,32 @@ public class ChapterArray extends ArrayAdapter<Chapter> {
             vTitle.setText(c.title);
         }
 
-        TextView vInfo = (TextView) convertView.findViewById(R.id.cInfo);
-        StringBuilder info_builder = new StringBuilder();
-        if(c.volume_id != null || c.volume_id != 0) {
-            info_builder.append("Volume ");
-            info_builder.append(c.volume_id);
-            info_builder.append("  ");
-        }
-        if(c.chapter_id != null) {
-            info_builder.append("Chapter ");
-            info_builder.append(c.chapter_id);
-            info_builder.append("  ");
-        }
-        if(c.release_date != null) {
-            info_builder.append("Release: ");
-            info_builder.append(c.release_date.format("%Y-%m-%d"));
+        {
+            TextView vInfo = (TextView) convertView.findViewById(R.id.cInfo);
+            StringBuilder info_builder = new StringBuilder();
+            if(c.volume_id != null || c.volume_id != 0) {
+                info_builder.append("Volume ");
+                info_builder.append(c.volume_id);
+                info_builder.append("  ");
+            }
+            if(c.chapter_id != null) {
+                info_builder.append("Chapter ");
+                info_builder.append(c.chapter_id);
+                info_builder.append("  ");
+            }
+            if(c.release_date != null) {
+                info_builder.append("Release: ");
+                info_builder.append(c.release_date.format("%Y-%m-%d"));
+            }
+            
+            vInfo.setText(info_builder.toString());    
         }
         
-        vInfo.setText(info_builder.toString());
-        
+        {
+            TextView vDownloaded = (TextView) convertView.findViewById(R.id.cDownloaded);
+            if(Database.getInstance().hasPages(c.id))
+                vDownloaded.setVisibility(View.VISIBLE);
+        }
         return convertView;
     }
 }
