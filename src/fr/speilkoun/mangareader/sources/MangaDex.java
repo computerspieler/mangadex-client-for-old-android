@@ -30,6 +30,7 @@ public class MangaDex {
 
 	static String getInfos(String id)
 		throws HTTPException {
+		//TODO: Add support for "artist" & "author" fields
 		return HTTP.getJSON(DEFAULT_DOMAIN_NAME, "/manga/"+ id +"?includes[]=cover_art");
 	}
 
