@@ -9,21 +9,9 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"/>
     
-    <LinearLayout
-        android:gravity="right"
+    <ZoomControls android:id="@+id/currentPageZoomControl"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_alignBottom="@id/currentPageImage">
-        <Button
-            android:text="+"
-            android:id="@+id/currentPageZoomIn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <Button
-            android:text="-"
-            android:id="@+id/currentPageZoomOut"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
+        android:layout_alignBottom="@id/currentPageImage"/>
 </RelativeLayout>

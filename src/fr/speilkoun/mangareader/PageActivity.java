@@ -13,10 +13,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.widget.ZoomControls;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Page;
 
@@ -175,29 +174,26 @@ public class PageActivity extends Activity {
         this.updateImageMatrix();
     }
 
-    void initZoomButtons() {
-        Button zoomIn = (Button) findViewById(R.id.currentPageZoomIn);
-        zoomIn.setOnClickListener(new OnClickListener() {
+    void initZoomControl() {
+        ZoomControls zoom_control = (ZoomControls) findViewById(R.id.currentPageZoomControl);
+
+        zoom_control.setIsZoomInEnabled(true);
+        zoom_control.setOnZoomInClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 PageActivity.this.setZoom(PageActivity.this.zoom + ZOOM_INCREMENT);
             }
         });
 
-        Button zoomOut = (Button) findViewById(R.id.currentPageZoomOut);
-        zoomOut.setOnClickListener(new OnClickListener() {
+        zoom_control.setIsZoomOutEnabled(true);
+        zoom_control.setOnZoomOutClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 PageActivity.this.setZoom(PageActivity.this.zoom - ZOOM_INCREMENT);
             }
         });
-        zoomOut.setOnLongClickListener(new OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                PageActivity.this.setZoom(DEFAULT_ZOOM);
-                return true;
-            }
-        });
+
+        zoom_control.show();
     }
 
 	@Override
@@ -259,6 +255,6 @@ public class PageActivity extends Activity {
 
         this.page_view.setFocusableInTouchMode(true);
 
-        initZoomButtons();
+        initZoomControl();
     }		
 }
