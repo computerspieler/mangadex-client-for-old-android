@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TextView;
@@ -187,16 +188,16 @@ public class MainActivity extends ActivityGroup {
 		}
 
 		{
-			Button button = (Button) this.findViewById(R.id.add);
-			button.setOnClickListener(new Button.OnClickListener() {
+			ImageButton button = (ImageButton) this.findViewById(R.id.add);
+			button.setOnClickListener(new ImageButton.OnClickListener() {
 				public void onClick(View v) {
 					MainActivity.this.showDialog(ADD_MANGA_DIALOG);
 				}
 			});
 		}
 		{
-			Button button = (Button) this.findViewById(R.id.refresh);
-			button.setOnClickListener(new Button.OnClickListener() {
+			ImageButton button = (ImageButton) this.findViewById(R.id.refresh);
+			button.setOnClickListener(new ImageButton.OnClickListener() {
 				public void onClick(View v) {
 					Toast.makeText(MainActivity.this, "Refreshing chapters", Toast.LENGTH_LONG)
 						.show();
