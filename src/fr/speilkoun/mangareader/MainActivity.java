@@ -205,5 +205,17 @@ public class MainActivity extends ActivityGroup {
 				}
 			});
 		}
+		{
+			ImageButton button = (ImageButton) this.findViewById(R.id.settings);
+			button.setOnClickListener(new ImageButton.OnClickListener() {
+				public void onClick(View v) {
+                    Intent intent = new Intent(
+                        MainActivity.this.getApplication(),
+                        ParameterActivity.class
+                    );
+                    MainActivity.this.startActivity(intent);
+				}
+			});
+		}
 	}
 }
