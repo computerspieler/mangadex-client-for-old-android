@@ -22,7 +22,7 @@ make
 make install_sw install_ssldirs
 ```
 
-### libjpeg
+### libjpeg (Not used for the moment)
 Thanks to: https://warpedtimes.wordpress.com/2010/02/03/building-open-source-libraries-with-android-ndk/
 
 ```bash
@@ -60,5 +60,7 @@ docker run -v .:/opt/ndk/apps/prj -i -t android-1.6 -c 'build prj debug'
 # This is to install it
 adb install -r bin/MainActivity-debug.apk
 ```
+
+**Note:** The build process generates an APK targetting Android 1.6 (API level 4). On modern Android devices, you might encounter an `INSTALL_FAILED_DEPRECATED_SDK_VERSION` error when installing the software. In that case, add the `--bypass-low-target-sdk-block` argument to the `adb install` command.
 
 As you might have guessed, the output apk is stored in `{root_of_repository}/bin/`.
