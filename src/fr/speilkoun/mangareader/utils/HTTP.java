@@ -10,21 +10,18 @@ public class HTTP {
     public static native void init();
     static native void rawDownloadFile(
         String output_path,
-        String domain,
-        String path
+        String url
     )
         throws HTTPException;
     public static native String getJSON(
-        String domain,
-        String path
+        String url
     )
         throws HTTPException;
 
     public static long downloadFileAndAddToDatabase(
         Context ctx,
         String filename,
-        String domain,
-        String path
+        String url
     )
         throws HTTPException
     {
@@ -34,8 +31,8 @@ public class HTTP {
         Long idx = db.findFile(output_path);
         
         if(idx == null) {
-            Log.i(TAG, "Downloading " + domain + path + " to " + output_path);
-            rawDownloadFile(output_path, domain, path);
+            Log.i(TAG, "Downloading " + url + " to " + output_path);
+            rawDownloadFile(output_path, url);
             idx = db.addFile(output_path);
         }
         return idx;

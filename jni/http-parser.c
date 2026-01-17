@@ -1,9 +1,12 @@
-#include "api.h"
-
-#include <jni.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <jni.h>
 #include <android/log.h>
-#include <openssl/ssl.h>
+
+#include <curl/curl.h>
+#include <curl/easy.h>
 
 #define LOG_TAG "HttpParserJNI"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -14,8 +17,10 @@
 		env,											\
 		"fr/speilkoun/mangareader/utils/HTTPException"	\
 	);													\
-	(*env)->ThrowNew(env, exception_cls, "");			\
+	(*env)->ThrowNew(env, exception_cls, msg);			\
 }
+
+#define USER_AGENT "manga-reader-for-old-android"
 
 static int initialized = 0;
 /* This is needed by libssl */
@@ -38,21 +43,40 @@ const unsigned char __clz_tab[] = {
 	    8, 8, 8, 8, 8, 8, 8, 8,
 };
 
+static size_t common_buffer_size = 0;
+static size_t common_buffer_filled = 0;
+static char *common_buffer = NULL;
+
 JNIEXPORT void Java_fr_speilkoun_mangareader_utils_HTTP_init(JNIEnv* env, jclass *cls)
 {
-	SSL_library_init();
-	SSL_load_error_strings();
-	OpenSSL_add_all_algorithms();
+	CURLcode result;
+	
+	common_buffer_size = 1024;
+	common_buffer = (char*) malloc(common_buffer_size * sizeof(common_buffer_size));
+	common_buffer_filled = 0;
 
-	init_api();
-  
+	result = curl_global_init(CURL_GLOBAL_ALL);
+	if(result)
+	    THROW_HTTP_EXCEPTION(env, "Could not initilize Curl");
+
     initialized = 1;
 }
 
 JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved)
 {
-    if(initialized)
-	    deinit_api();
+	if(!initialized) 
+		return;
+	curl_global_cleanup();
+
+	free(common_buffer);
+	common_buffer = NULL;
+	common_buffer_size = 0;
+}
+
+size_t write_chunk_to_file(void *data, size_t size, size_t nmemb, void *userdata)
+{
+	FILE *fp = (FILE*) userdata;
+	return fwrite(data, size, nmemb, fp);
 }
 
 JNIEXPORT void
@@ -60,70 +84,108 @@ Java_fr_speilkoun_mangareader_utils_HTTP_rawDownloadFile(
     JNIEnv* env,
     jclass cls,
     jstring output_path,
-    jstring domain,
-    jstring path
+    jstring url
 )
 {
-	Context ctx;
-	int output;
-    FILE *f;
-	const char *raw_domain;
+	CURL *curl;
+	CURLcode result;
+	long res_status;
+	FILE *fp;
 
-    f = fopen((*env)->GetStringUTFChars(env, output_path, 0), "wb");
-    if(!f) {
-        LOGE("Could not open the output path: %s", strerror(errno));
-		THROW_HTTP_EXCEPTION(env, "Unable to open the desired file");
-    } else
-		LOGI("%s is opened", (*env)->GetStringUTFChars(env, output_path, 0));
-
-	raw_domain = (*env)->GetStringUTFChars(env, domain, 0);
-	output = -createContext(&ctx, raw_domain);
-	if(!output) {
-		LOGI("Create context suceeded");
-		output = run_request_and_download_file(&ctx, f,
-			raw_domain,
-			(*env)->GetStringUTFChars(env, path, 0)
-		);
-		freeContext(&ctx);
+	fp = fopen((*env)->GetStringUTFChars(env, output_path, 0), "wb");
+	if(!fp) {
+		LOGE("Could not open the output file: %s", strerror(errno));
+		THROW_HTTP_EXCEPTION(env, "Could not open the output file");
 	}
 
-	fclose(f);
+	curl = curl_easy_init();
+  	if(!curl) 
+		THROW_HTTP_EXCEPTION(env, "Could not instantiate a curl instance");
+    
+	LOGI("Querying %s", (*env)->GetStringUTFChars(env, url, 0));
+	curl_easy_setopt(curl, CURLOPT_URL, (*env)->GetStringUTFChars(env, url, 0));
+	curl_easy_setopt(curl, CURLOPT_CA_CACHE_TIMEOUT, 604800L);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_chunk_to_file);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, USER_AGENT);
 	
-	if(output < 0) {
-		LOGI("Received this error code from run_request_and_download_file: %d\n", output);
-		THROW_HTTP_EXCEPTION(env, "Got an error from run_request_and_download_file");
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+
+	result = curl_easy_perform(curl);
+	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &res_status);
+	curl_easy_cleanup(curl);
+	fclose(fp);
+	
+	if(result != CURLE_OK) {
+		LOGE("Got an error from Curl: %s", curl_easy_strerror(result));
+		THROW_HTTP_EXCEPTION(env, curl_easy_strerror(result));
+		return NULL;
+	}
+
+	if(res_status != 200) {
+		LOGE("Got the following HTTP code: %ld", res_status);
+		THROW_HTTP_EXCEPTION(env, "Got an invalid HTTP code");
+		return NULL;
 	}
 }
 
+size_t write_chunk_to_shared_buffer(void *data, size_t size, size_t nmemb, void *userdata)
+{
+	size_t real_size = size * nmemb;
+	if(common_buffer_filled+real_size >= common_buffer_size) {
+		common_buffer_size += real_size;
+		common_buffer = realloc(common_buffer, common_buffer_size * sizeof(char));
+		if(!common_buffer) {
+			LOGE("Could not expand the temp buffer");
+			return 0;
+		}
+	}
+
+	memcpy(common_buffer + common_buffer_filled, data, real_size);
+	common_buffer_filled += real_size;
+	return real_size;
+}
 
 JNIEXPORT jstring
 Java_fr_speilkoun_mangareader_utils_HTTP_getJSON(
     JNIEnv* env,
     jclass cls,
-    jstring domain,
-    jstring path
+    jstring url
 )
 {
-	Context ctx;
-	int output;
-	const char *raw_domain;
+	CURL *curl;
+	CURLcode result;
+	long res_status;
 
-	raw_domain = (*env)->GetStringUTFChars(env, domain, 0);
-	output = -createContext(&ctx, raw_domain);
+	common_buffer_filled = 0;
+	curl = curl_easy_init();
+  	if(!curl) 
+		THROW_HTTP_EXCEPTION(env, "Could not instantiate a curl instance");
     
-	if(!output) {
-		output = run_request_and_get_json(&ctx,
-			raw_domain,
-			(*env)->GetStringUTFChars(env, path, 0)
-		);
-		freeContext(&ctx);
+	LOGI("Querying %s", (*env)->GetStringUTFChars(env, url, 0));
+	curl_easy_setopt(curl, CURLOPT_URL, (*env)->GetStringUTFChars(env, url, 0));
+	curl_easy_setopt(curl, CURLOPT_CA_CACHE_TIMEOUT, 604800L);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_chunk_to_shared_buffer);
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, USER_AGENT);
+	
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+
+	result = curl_easy_perform(curl);
+	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &res_status);
+	curl_easy_cleanup(curl);
+	
+	if(result != CURLE_OK) {
+		LOGE("Got an error from Curl: %s", curl_easy_strerror(result));
+		THROW_HTTP_EXCEPTION(env, curl_easy_strerror(result));
+		return NULL;
 	}
 
-	if(output < 0) {
-		LOGE("Received this error code from run_request_and_get_json: %d\n", output);
-		THROW_HTTP_EXCEPTION(env, "Got an error from run_request_and_get_json");
+	if(res_status != 200) {
+		LOGE("Got the following HTTP code: %ld", res_status);
+		THROW_HTTP_EXCEPTION(env, "Got an invalid HTTP code");
 		return NULL;
 	}
 	
-    return (*env)->NewStringUTF(env, getResponseBody());
+	common_buffer[common_buffer_filled] = 0;
+	return (*env)->NewStringUTF(env, common_buffer);
 }

@@ -5,6 +5,7 @@
 /obj
 /openssl
 /jpeg-9f
+/curl
 .vscode
 .clangd
 *.tar.gz

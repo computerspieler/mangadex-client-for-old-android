@@ -9,7 +9,8 @@ build() {
 install_apk() {
     # We have to get grep's return code to check for a success because ADB
     # Doesn't returns anything by default
-    adb install -r bin/MainActivity-debug.apk | tee /dev/stderr | grep -q Success
+    ARGS=( -r )
+    adb install $ARGS bin/MainActivity-debug.apk  | tee /dev/stderr | grep -q Success
 }
 
 install() {

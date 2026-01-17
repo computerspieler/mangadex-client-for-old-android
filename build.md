@@ -32,6 +32,21 @@ make
 make install
 ```
 
+### curl
+```bash
+cd curl
+./configure --prefix=$PREFIX \
+    --host=arm-linux-androideabi --with-openssl=$PREFIX \
+    --enable-debug --enable-shared \
+    --disable-dict --disable-ftp --disable-imap --disable-ldap --disable-ldaps --disable-pop3 --disable-proxy --disable-rtsp --disable-smtp --disable-telnet --disable-tftp --disable-zlib --disable-docs \
+    --without-ca-bundle --without-gnutls --without-libidn --without-librtmp --without-libssh2 --without-nss --without-zlib --without-libpsl \
+    CPPFLAGS="-I/opt/ndk/platforms/android-4/arch-arm/usr/include" \
+    LDFLAGS="--sysroot=/opt/ndk/platforms/android-4/arch-arm" \
+    LIBS="-lc -ldl"
+make
+make install
+```
+
 You can now quit the root shell of the build environment.
 
 ### The main application

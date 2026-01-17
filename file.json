@@ -1,0 +1,161 @@
+{
+    "data": [
+        {
+            "attributes": {
+                "chapter": "55",
+                "createdAt": "2023-03-31T12:29:34+00:00",
+                "externalUrl": null,
+                "isUnavailable": false,
+                "pages": 12,
+                "publishAt": "2023-03-31T12:29:35+00:00",
+                "readableAt": "2023-03-31T12:29:35+00:00",
+                "title": null,
+                "translatedLanguage": "en",
+                "updatedAt": "2023-08-25T10:44:20+00:00",
+                "version": 8,
+                "volume": "5"
+            },
+            "id": "388f85e3-7b05-4f5b-8e6a-32698fd0a7ac",
+            "relationships": [
+                {
+                    "id": "0415bc57-9814-46ce-86e3-c4997f6d81ca",
+                    "type": "scanlation_group"
+                },
+                {
+                    "id": "2e0fdb3b-632c-4f8f-a311-5b56952db647",
+                    "type": "manga"
+                },
+                {
+                    "id": "c89b37ff-96e7-4196-a230-db8311316225",
+                    "type": "user"
+                }
+            ],
+            "type": "chapter"
+        },
+        {
+            "attributes": {
+                "chapter": "77",
+                "createdAt": "2024-05-20T01:10:14+00:00",
+                "externalUrl": null,
+                "isUnavailable": false,
+                "pages": 10,
+                "publishAt": "2024-05-20T14:34:43+00:00",
+                "readableAt": "2024-05-20T14:34:43+00:00",
+                "title": null,
+                "translatedLanguage": "en",
+                "updatedAt": "2024-11-08T00:52:22+00:00",
+                "version": 5,
+                "volume": "7"
+            },
+            "id": "2da0c556-6ae4-494d-86b8-499633522d57",
+            "relationships": [
+                {
+                    "id": "e15ea632-8c30-407f-bee0-6e2ed2d2473c",
+                    "type": "scanlation_group"
+                },
+                {
+                    "id": "2e0fdb3b-632c-4f8f-a311-5b56952db647",
+                    "type": "manga"
+                },
+                {
+                    "id": "fd0eb1ac-05f7-469a-b6c9-34c354e219a8",
+                    "type": "user"
+                }
+            ],
+            "type": "chapter"
+        },
+        {
+            "attributes": {
+                "chapter": "1",
+                "createdAt": "2019-04-01T14:37:48+00:00",
+                "externalUrl": null,
+                "isUnavailable": false,
+                "pages": 11,
+                "publishAt": "2019-04-01T14:37:48+00:00",
+                "readableAt": "2019-04-01T14:37:48+00:00",
+                "title": "",
+                "translatedLanguage": "en",
+                "updatedAt": "2019-04-01T14:37:48+00:00",
+                "version": 1,
+                "volume": "1"
+            },
+            "id": "102d5de2-48f5-4471-a75d-03eb08fd681b",
+            "relationships": [
+                {
+                    "id": "eb93735f-690c-4f86-9cc0-225f63d0d891",
+                    "type": "scanlation_group"
+                },
+                {
+                    "id": "2e0fdb3b-632c-4f8f-a311-5b56952db647",
+                    "type": "manga"
+                },
+                {
+                    "id": "3be0a00f-da2e-4b1a-b5d2-3ac86895b40f",
+                    "type": "user"
+                }
+            ],
+            "type": "chapter"
+        },
+        {
+            "attributes": {
+                "chapter": "63",
+                "createdAt": "2023-04-27T11:05:28+00:00",
+                "externalUrl": null,
+                "isUnavailable": false,
+                "pages": 9,
+                "publishAt": "2023-04-27T11:05:28+00:00",
+                "readableAt": "2023-04-27T11:05:28+00:00",
+                "title": null,
+                "translatedLanguage": "en",
+                "updatedAt": "2023-08-27T06:39:37+00:00",
+                "version": 4,
+                "volume": "6"
+            },
+            "id": "0dcf65b2-2fff-4add-892c-2adf1ab3553d",
+            "relationships": [
+                {
+                    "id": "2e0fdb3b-632c-4f8f-a311-5b56952db647",
+                    "type": "manga"
+                },
+                {
+                    "id": "6e7fd6cc-4610-4c02-8f94-9a1ce68e44ff",
+                    "type": "user"
+                }
+            ],
+            "type": "chapter"
+        },
+        {
+            "attributes": {
+                "chapter": "13.5",
+                "createdAt": "2023-06-20T13:23:46+00:00",
+                "externalUrl": null,
+                "isUnavailable": false,
+                "pages": 8,
+                "publishAt": "2023-06-20T13:23:47+00:00",
+                "readableAt": "2023-06-20T13:23:47+00:00",
+                "title": "Volume 1 Extras",
+                "translatedLanguage": "en",
+                "updatedAt": "2023-06-21T04:15:46+00:00",
+                "version": 4,
+                "volume": "1"
+            },
+            "id": "4703e767-fefe-4eeb-a0c7-23bc8e033caa",
+            "relationships": [
+                {
+                    "id": "2e0fdb3b-632c-4f8f-a311-5b56952db647",
+                    "type": "manga"
+                },
+                {
+                    "id": "aa5759bf-2230-4c9e-bb49-61ce24017c6f",
+                    "type": "user"
+                }
+            ],
+            "type": "chapter"
+        }
+    ],
+    "limit": 5,
+    "offset": 0,
+    "response": "collection",
+    "result": "ok",
+    "total": 112
+}

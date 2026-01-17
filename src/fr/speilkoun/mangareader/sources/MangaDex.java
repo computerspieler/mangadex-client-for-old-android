@@ -26,23 +26,25 @@ public class MangaDex {
 	public static String TAG = "MangaDex";
 	public static int MAX_RETRIES = 3;
 
-	static String DEFAULT_DOMAIN_NAME = "api.mangadex.org";
+	static String DEFAULT_DOMAIN_NAME = "https://api.mangadex.org";
 
 	static String getInfos(String id)
 		throws HTTPException {
 		//TODO: Add support for "artist" & "author" fields
-		return HTTP.getJSON(DEFAULT_DOMAIN_NAME, "/manga/"+ id +"?includes[]=cover_art");
+		return HTTP.getJSON(DEFAULT_DOMAIN_NAME + "/manga/" + id + "?includes[]=cover_art");
 	}
 
 	static String getChapterImages(String id)
 		throws HTTPException {
-		return HTTP.getJSON(DEFAULT_DOMAIN_NAME, "/at-home/server/"+ id);
+		return HTTP.getJSON(DEFAULT_DOMAIN_NAME + "/at-home/server/" + id);
 	}
 
 	static String getChapters(String id, int offset)
 		throws HTTPException {
-		return HTTP.getJSON(DEFAULT_DOMAIN_NAME,
-			"/manga/" + id + "/feed?offset=" + offset +"&limit=10&translatedLanguage[]=en");
+		return HTTP.getJSON(
+			DEFAULT_DOMAIN_NAME +
+			"/manga/" + id + "/feed?offset=" + offset +"&limit=10&translatedLanguage[]=en"
+		);
 	}
 
 	public static ArrayList<Serie> searchManga(Context ctx, String name)
@@ -52,7 +54,7 @@ public class MangaDex {
 
 		Log.i(TAG, URLEncoder.encode(name, "utf-8"));
 		String raw = HTTP.getJSON(
-			DEFAULT_DOMAIN_NAME,
+			DEFAULT_DOMAIN_NAME+
 			"/manga?title=" + URLEncoder.encode(name, "utf-8") + "&includes[]=cover_art&limit=3"
 		);
 		
@@ -194,8 +196,8 @@ public class MangaDex {
 				Log.i(TAG, "Loading cover");
 				cover_image_id = HTTP.downloadFileAndAddToDatabase(ctx,
 					cover_filename,
-					"uploads.mangadex.org",
-					"/covers/" + id + "/" + cover_filename + ".256.jpg"
+					"https://uploads.mangadex.org/covers/"
+					+ id + "/" + cover_filename + ".256.jpg"
 				);
 			} catch (Exception e) {
 				Log.e(TAG, "Unable to download the cover image of " + title);
@@ -240,8 +242,7 @@ public class MangaDex {
 			JSONTokener tokener = new JSONTokener(images);
 			JSONObject obj = new JSONObject(tokener);
 
-			String base_url = obj.getString("baseUrl")
-				.replace("https://", "");
+			String base_url = obj.getString("baseUrl");
 			JSONObject chapters = obj.getJSONObject("chapter");
 			String chapter_hash = chapters.getString("hash");
 			String path_to_use = chapters.has("dataSaver") ?
@@ -255,7 +256,7 @@ public class MangaDex {
 				Log.i(TAG, "Loading page " + (i+1) + "/" + pages.length() + ": " + filename);
 				long file_idx = HTTP.downloadFileAndAddToDatabase(ctx,
 					filename,
-					base_url, path_to_use + chapter_hash + "/" + filename
+					base_url + path_to_use + chapter_hash + "/" + filename
 				);
 
 				Database.getInstance().addPage(
