@@ -18,6 +18,7 @@ import android.widget.Toast;
 import android.widget.ZoomControls;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Page;
+import fr.speilkoun.mangareader.utils.Parameter;
 
 public class PageActivity extends Activity {
     class OnImageTouchListener implements OnTouchListener {
@@ -38,7 +39,7 @@ public class PageActivity extends Activity {
             case MotionEvent.ACTION_UP:
                 // Ignore page switching when zoomed in
                 // to avoid issues        
-                if(parent.zoom == DEFAULT_ZOOM) {
+                if(parent.zoom == parent.getDefaultZoom()) {
                     float portionX = ev.getX() / v.getWidth();
                     if(portionX >= .66)
                         parent.set_current_page(parent.current_page_idx + 1);
@@ -50,7 +51,7 @@ public class PageActivity extends Activity {
                 break;
 
             case MotionEvent.ACTION_DOWN:
-                if(parent.zoom == DEFAULT_ZOOM)
+                if(parent.zoom == parent.getDefaultZoom())
                     break;
                 
                 on_drag = true;
@@ -83,9 +84,8 @@ public class PageActivity extends Activity {
     ArrayList<Page> pages;
 
     final int ZOOM_INCREMENT = 20;
-    final int DEFAULT_ZOOM = 100;
 
-    int zoom = DEFAULT_ZOOM;
+    int zoom;
     int current_page_idx = 0;
     Matrix image_matrix = new Matrix();
     Bitmap current_image;
@@ -120,10 +120,16 @@ public class PageActivity extends Activity {
         resetZoom();
     }
 
+    int getDefaultZoom() {
+        return Parameter.DEFAULT_ZOOM
+            .get(this.getPreferences(MODE_APPEND), getApplicationContext())
+            .intValue();
+    }
+
     void resetZoom() {
         if(current_image == null)
             return;
-        zoom = DEFAULT_ZOOM;
+        zoom = this.getDefaultZoom();
 
         float page_width  = (float) page_view.getWidth();
         float page_height = (float) page_view.getHeight();
@@ -148,9 +154,9 @@ public class PageActivity extends Activity {
     }
 
     void setZoom(int new_zoom) {
-        new_zoom = Math.max(new_zoom, DEFAULT_ZOOM);
+        new_zoom = Math.max(new_zoom, this.getDefaultZoom());
 
-        if(new_zoom == DEFAULT_ZOOM) {
+        if(new_zoom == this.getDefaultZoom()) {
             resetZoom();
             return;
         }
