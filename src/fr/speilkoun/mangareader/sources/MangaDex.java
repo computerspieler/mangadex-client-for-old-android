@@ -119,7 +119,7 @@ public class MangaDex extends Source {
 		Database db = Database.getInstance();
 
 		if(s == null) {
-			Log.e(TAG, "Could not find a manga with following id in db: " + s.attribute);
+			Log.e(TAG, "Tried to retrieve chapter for a non-existant serie");
 			return;
 		}
 		int manga_db_idx = s.id;

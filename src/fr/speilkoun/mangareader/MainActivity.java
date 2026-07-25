@@ -21,7 +21,6 @@ import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 import fr.speilkoun.mangareader.actions.GetLatestChapters;
-import fr.speilkoun.mangareader.background.DownloadService;
 import fr.speilkoun.mangareader.background.SearchSerie;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Serie;
