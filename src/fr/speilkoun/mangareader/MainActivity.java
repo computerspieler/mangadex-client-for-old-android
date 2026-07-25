@@ -4,12 +4,11 @@ import java.util.ArrayList;
 
 import android.app.ActivityGroup;
 import android.app.Dialog;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -21,120 +20,151 @@ import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
-import fr.speilkoun.mangareader.actions.ActionQueue;
-import fr.speilkoun.mangareader.actions.RefreshChapterAction;
+import fr.speilkoun.mangareader.actions.GetLatestChapters;
+import fr.speilkoun.mangareader.background.DownloadService;
+import fr.speilkoun.mangareader.background.SearchSerie;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Serie;
 import fr.speilkoun.mangareader.data.SerieArray;
 import fr.speilkoun.mangareader.data.SerieGroup;
-import fr.speilkoun.mangareader.sources.MangaDex;
-import fr.speilkoun.mangareader.utils.HTTP;
 
 public class MainActivity extends ActivityGroup {
+	public String add_manga_name = null;
+	public ArrayList<Serie> series = null;
 
-	static {
-		Log.d("mangadex", "Starting");
-		HTTP.init();
-	}
+	enum DialogState {
+		ADD_MANGA_DIALOG(0) {
+			@Override
+			Dialog createDialog(final MainActivity activity) {
+				final Dialog dialog = super.createDialog(activity);
+				dialog.setTitle(R.string.add_manga);
+				dialog.setContentView(R.layout.add_manga_popup);
 
-	static final int ADD_MANGA_DIALOG = 0;
-	static final int MANGA_SELECTION_DIALOG = 1;
-	String add_manga_name = null;
-
-	NotificationManager nm;
-
-	@Override
-	protected Dialog onCreateDialog(final int id) {
-		Button done, cancel;
-		final Dialog dialog = new Dialog(this);
-
-		dialog.setOnDismissListener(new OnDismissListener() {
-			public void onDismiss(DialogInterface d)
-			{ MainActivity.this.removeDialog(id); }
-		});
-
-		switch(id) {
-		case ADD_MANGA_DIALOG:
-			dialog.setTitle(R.string.add_manga);
-			dialog.setContentView(R.layout.add_manga_popup);
-
-			done = (Button) dialog.findViewById(R.id.done);
-			done.setOnClickListener(new Button.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					MainActivity.this.add_manga_name = ((TextView) dialog.findViewById(R.id.manga_name))
-						.getText()
-						.toString();
-					MainActivity.this.removeDialog(ADD_MANGA_DIALOG);
-
-					Log.i("Done", "Got: " + MainActivity.this.add_manga_name);
-					MainActivity.this.showDialog(MANGA_SELECTION_DIALOG);
-				}
-			});
-
-			cancel = (Button) dialog.findViewById(R.id.cancel);
-			cancel.setOnClickListener(new Button.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					dialog.dismiss();
-				}
-			});
-			break;
-		
-		case MANGA_SELECTION_DIALOG:
-			dialog.setTitle(R.string.add_manga);
-			try {
-				ListView selection = new ListView(this);
-				selection.setAdapter(new SerieArray(this,
-					MangaDex.searchManga(this, MainActivity.this.add_manga_name)
-				));
-				selection.setOnItemClickListener(new OnItemClickListener() {
+				Button done = (Button) dialog.findViewById(R.id.done);
+				done.setOnClickListener(new Button.OnClickListener() {
 					@Override
-					public void onItemClick(AdapterView<?> parent, View v, int pos, long id) {
-						final Serie s = (Serie) parent.getItemAtPosition(pos);
+					public void onClick(View v) {
+						activity.add_manga_name = ((TextView) dialog.findViewById(R.id.manga_name))
+							.getText()
+							.toString();
+						activity.removeDialog(ADD_MANGA_DIALOG);
 
-						Database.getInstance().addSerie(s);
-						MainActivity.this.refreshSelectedList();
-						
-						Notification notification = new Notification(
-							android.R.drawable.ic_notification_overlay,
-							"Loading " + s.title,
-							System.currentTimeMillis()
-						);
-						PendingIntent contentIntent = PendingIntent.getActivity(
-							MainActivity.this,
-							0,
-							new Intent(MainActivity.this, MainActivity.class),
-							0
-						);
-						notification.setLatestEventInfo(getApplicationContext(),
-							getString(R.string.loading_serie),
-							"Loading " + s.title,
-							contentIntent
-						);
-						notification.flags |= Notification.FLAG_NO_CLEAR;
-						notification.flags |= Notification.FLAG_ONGOING_EVENT;
+						Log.i("Done", "Got: " + activity.add_manga_name);
+						activity.showDialog(MANGA_RETRIEVING_MANGA_LIST);
+					}
+				});
 
-						final int notif_id = 1;
-						nm.notify(notif_id, notification);
-						
-						ActionQueue.sendAction(new RefreshChapterAction(s));						
+				Button cancel = (Button) dialog.findViewById(R.id.cancel);
+				cancel.setOnClickListener(new Button.OnClickListener() {
+					@Override
+					public void onClick(View v) {
 						dialog.dismiss();
 					}
 				});
-				dialog.setContentView(selection);
-				
-			} catch(Exception e) {
-				Log.e("onCreateDialog",
-					"Unable to create the dialog: " + e.getClass().getCanonicalName(),
-					e);
-				dialog.dismiss();
+				return dialog;
 			}
-			break;
+		},
+
+		MANGA_RETRIEVING_MANGA_LIST(1) {
+			@Override
+			Dialog createDialog(final MainActivity activity) {
+				final ProgressDialog dialog = new ProgressDialog(activity);
+				dialog.setOnCancelListener(null);
+				dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+				dialog.setTitle("Search: " + activity.add_manga_name);
+				dialog.setMessage("Searching...\nPlease wait");
+
+				activity.series = null;
+
+				// Creates a backgroud task which will retrieve
+				// entries, and once it's done, will call onPostExecute
+				// FROM THE SAME THREAD AS THE ACTIVITY
+				final AsyncTask<String, Void, ArrayList<Serie>> task = new SearchSerie(){
+					@Override
+					protected void onPostExecute(ArrayList<Serie> result) {
+						super.onPostExecute(result);
+
+						activity.series = result;
+						activity.removeDialog(MANGA_RETRIEVING_MANGA_LIST);
+						if(!isCancelled())
+							activity.showDialog(MANGA_SELECTION_DIALOG);
+					}
+				}.execute(activity.add_manga_name);
+
+				dialog.setOnCancelListener(new Dialog.OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface d) {
+						task.cancel(false);
+						activity.removeDialog(MANGA_RETRIEVING_MANGA_LIST);
+					}
+				});
+				
+				return dialog;
+			}
+		},
+
+		MANGA_SELECTION_DIALOG(2) {
+			@Override
+			Dialog createDialog(final MainActivity activity) {
+				final Dialog dialog = super.createDialog(activity);
+				dialog.setTitle(R.string.add_manga);
+				try {
+					ListView selection = new ListView(activity);
+					selection.setAdapter(new SerieArray(activity, activity.series));
+					selection.setOnItemClickListener(new OnItemClickListener() {
+						@Override
+						public void onItemClick(AdapterView<?> parent, View v, int pos, long id) {
+							final Serie s = (Serie) parent.getItemAtPosition(pos);
+							Database.getInstance().addSerie(s);
+							activity.refreshSelectedList();
+							
+							GetLatestChapters.execute(activity, s);
+							dialog.dismiss();
+						}
+					});
+					dialog.setContentView(selection);
+					
+				} catch(Exception e) {
+					Log.e("onCreateDialog",
+						"Unable to create the dialog: " + e.getClass().getCanonicalName(),
+						e);
+					dialog.dismiss();
+				}
+				return dialog;
+			}
 		}
+		;
 		
-		return dialog;
+		Dialog createDialog(final MainActivity activity) {
+			final Dialog dialog = new Dialog(activity);
+
+			dialog.setCancelable(true);
+			dialog.setCanceledOnTouchOutside(true);
+			dialog.setOnDismissListener(new OnDismissListener() {
+				public void onDismiss(DialogInterface d)
+				{ activity.removeDialog(id); }
+			});
+			
+			return dialog;
+		}
+
+		public final int id;
+		DialogState(int id) {
+			this.id = id;
+		} 
+	} 
+
+	@Override
+	protected Dialog onCreateDialog(final int id) {
+		for(DialogState state: DialogState.values())
+			if(id == state.id)
+				return state.createDialog(this);
+
+		return null;
 	}
+
+	public void removeDialog(DialogState state) { this.removeDialog(state.id); }
+	public void showDialog(DialogState state)   { this.showDialog(state.id); }
 
 	void refreshSelectedList() {
 		TabHost tabHost = (TabHost) this.findViewById(R.id.serie_group_list);
@@ -162,9 +192,6 @@ public class MainActivity extends ActivityGroup {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		
-		Database.initInstance(this);
 		this.setContentView(R.layout.main);
 		//this.findViewById(R.layout.main)
 		//	.setBackgroundDrawable(android.R.drawable.screen_background_dark);
@@ -191,7 +218,7 @@ public class MainActivity extends ActivityGroup {
 			ImageButton button = (ImageButton) this.findViewById(R.id.add);
 			button.setOnClickListener(new ImageButton.OnClickListener() {
 				public void onClick(View v) {
-					MainActivity.this.showDialog(ADD_MANGA_DIALOG);
+					MainActivity.this.showDialog(DialogState.ADD_MANGA_DIALOG.id);
 				}
 			});
 		}

@@ -22,9 +22,11 @@ public class Database {
             mInstance = new Database(ctx);
     }
 
+	Context ctx;
     SQLiteDatabase mDB;
     private Database(Context ctx) {
-        String path = ctx.getFileStreamPath("manga_reader.db").getAbsolutePath();
+		this.ctx = ctx;
+        String path = getFileFullPath("manga_reader.db");
         mDB = SQLiteDatabase.openDatabase(
             path,
             null,
@@ -191,27 +193,6 @@ public class Database {
         return idx;
     }
 
-    public synchronized void logChapters() {
-        Cursor cur = mDB.query("chapter",
-            new String[] { "serie_id", "chapter_id" },
-            null,
-            null,
-            null,
-            null,
-            null
-        );
-        cur.moveToPosition(-1);
-
-        while(cur.moveToNext()) {
-            Log.i("MANGADEX's Chapters",
-            "Serie: " + cur.getString(cur.getColumnIndex("serie_id")) + ", " +
-            "Chapters: " + cur.getString(cur.getColumnIndex("chapter_id"))
-            );
-        }
-
-        cur.close();
-    }
-
     public synchronized SerieArray adapterSerie(Context ctx, int group) {
         Cursor cur = mDB.rawQuery("SELECT * FROM serie WHERE group_id = ?", new String[] { ""+group });
         
@@ -327,4 +308,8 @@ public class Database {
 
         return pages;
     }
+
+	public String getFileFullPath(String filename) {
+		return ctx.getFileStreamPath(filename).getAbsolutePath();
+	}
 }

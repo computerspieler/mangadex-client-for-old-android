@@ -1,0 +1,6 @@
+- Series can be added multiples times
+- No refresh of activity after refresh
+- No stop when downloading chapters
+- Search:
+	- Split results per sources / Select sources
+	- Add the ability to pick the amount of results

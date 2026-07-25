@@ -1,5 +1,5 @@
-# MangaDex Client for old Android
-This is an open-source MangaDex client for Android devices running versions Android 1.6 and above.
+# Manga reader for old Android
+This is an open-source Manga client for Android devices running versions Android 1.6 and above.
 
 ## How to build the project ?
 Please refer to the [build instructions](build.md).

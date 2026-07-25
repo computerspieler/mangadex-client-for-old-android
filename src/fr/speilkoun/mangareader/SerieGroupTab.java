@@ -7,8 +7,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import fr.speilkoun.mangareader.actions.ActionQueue;
-import fr.speilkoun.mangareader.actions.RefreshChapterAction;
+import fr.speilkoun.mangareader.actions.GetLatestChapters;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Serie;
 
@@ -30,7 +29,8 @@ public class SerieGroupTab extends ListActivity {
     void refreshChapters() {
         for(int i = 0; i < this.getListAdapter().getCount(); i ++) {
             Serie s = (Serie) this.getListAdapter().getItem(i);
-            ActionQueue.sendAction(new RefreshChapterAction(s));
+			// https://stackoverflow.com/questions/3816121/why-are-my-serviceconnection-methods-never-executed
+            GetLatestChapters.execute(this.getApplicationContext(), s);
         }
     }
 

@@ -1,10 +1,11 @@
 package fr.speilkoun.mangareader.data;
 
 import android.text.format.Time;
-
 import android.content.ContentValues;
+import android.os.Parcel;
+import android.os.Parcelable;
 
-public class Chapter {
+public class Chapter implements Parcelable {
     public final int id;
     public final int serie_id;
     public final Integer chapter_id;
@@ -58,4 +59,43 @@ public class Chapter {
 
         return output;
     }
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	public static final Parcelable.Creator<Chapter> CREATOR = new Parcelable.Creator<Chapter>() {
+		public Chapter createFromParcel(Parcel in) {
+			return new Chapter(in);
+		}
+
+		public Chapter[] newArray(int size) {
+			return new Chapter[size];
+		}
+	};
+
+	@Override
+	public void writeToParcel(Parcel out, int flags) {
+		out.writeInt(this.id);
+		out.writeInt(this.serie_id);
+		out.writeInt(this.volume_id);
+		out.writeInt(this.chapter_id);
+		out.writeString(this.title);
+		out.writeString(this.publisher);
+		out.writeString(this.custom_attributes);
+		out.writeString(this.release_date.format3339(true));
+	}
+
+	private Chapter(Parcel in) {
+		this.id = in.readInt();
+		this.serie_id = in.readInt();
+		this.volume_id = in.readInt();
+		this.chapter_id = in.readInt();
+		this.title = in.readString();
+		this.publisher = in.readString();
+		this.custom_attributes = in.readString();
+		this.release_date = new Time();
+		this.release_date.parse3339(in.readString());
+	}
 }

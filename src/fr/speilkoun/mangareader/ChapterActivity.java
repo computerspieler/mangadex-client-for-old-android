@@ -9,10 +9,8 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Toast;
-import fr.speilkoun.mangareader.actions.ActionQueue;
-import fr.speilkoun.mangareader.actions.DownloadChapterAction;
-import fr.speilkoun.mangareader.actions.RefreshChapterAction;
+import fr.speilkoun.mangareader.actions.DownloadChapter;
+import fr.speilkoun.mangareader.actions.GetLatestChapters;
 import fr.speilkoun.mangareader.data.Chapter;
 import fr.speilkoun.mangareader.data.Database;
 import fr.speilkoun.mangareader.data.Serie;
@@ -25,24 +23,6 @@ public class ChapterActivity extends Activity {
 		ListView view = (ListView) this.findViewById(R.id.chapters_list);
 		view.setAdapter(Database.getInstance().adapterChapter(this, mSerie.id));
 	}
-
-    void refreshChapters() {
-        ActionQueue.sendAction(new RefreshChapterAction(mSerie) {
-            @Override
-            public void onSuccess(Serie s)
-            { ChapterActivity.this.refreshList(); }
-
-            @Override
-            public void onFailure(Serie s) {
-                Toast.makeText(
-                    ChapterActivity.this,
-                    "Could not refresh",
-                    Toast.LENGTH_LONG
-                )
-                    .show();
-            }
-        });
-    }
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -59,7 +39,10 @@ public class ChapterActivity extends Activity {
         button.setOnClickListener(new Button.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ChapterActivity.this.refreshChapters();
+				GetLatestChapters.execute(
+					ChapterActivity.this,
+					ChapterActivity.this.mSerie
+				);
             }
         });
 
@@ -71,8 +54,10 @@ public class ChapterActivity extends Activity {
                 Log.i(TAG, "Clicked on " + c.id);
                 
                 if(!Database.getInstance().hasPages(c.id)) {
-                    ActionQueue.sendAction(
-                        new DownloadChapterAction(ChapterActivity.this, c) {
+					DownloadChapter.execute(ChapterActivity.this, c);
+					/*
+                    ActionMailboxes.DATA_RETRIEVER.sendAction(
+                        new DownloadChapterAction(c) {
                             @Override
                             public void onSuccess(Chapter c) {
                                 Intent intent = new Intent(
@@ -82,17 +67,9 @@ public class ChapterActivity extends Activity {
                                 intent.putExtra("chapter_id", c.id);
                                 ChapterActivity.this.startActivity(intent);
                             }
-
-                            @Override
-                            public void onFailure(Chapter c) {
-                                Toast.makeText(
-                                    ChapterActivity.this.getApplicationContext(), 
-                                    "Could not download this chapter",
-                                    Toast.LENGTH_LONG
-                                ).show();
-                            }
                         }
                     );
+					 */
                 } else {
                     Intent intent = new Intent(
                         ChapterActivity.this.getApplication(),

@@ -10,7 +10,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import android.content.Context;
 import android.text.format.Time;
 import android.util.Log;
 
@@ -22,24 +21,28 @@ import fr.speilkoun.mangareader.utils.HTTP;
 import fr.speilkoun.mangareader.utils.HTTPException;
 import fr.speilkoun.mangareader.utils.ISO8601DateParser;
 
-public class MangaDex {
+public class MangaDex extends Source {
 	public static String TAG = "MangaDex";
 	public static int MAX_RETRIES = 3;
 
 	static String DEFAULT_DOMAIN_NAME = "https://api.mangadex.org";
 
-	static String getInfos(String id)
+	public MangaDex() {
+		super("mangadex");
+	}
+
+	String getInfos(String id)
 		throws HTTPException {
 		//TODO: Add support for "artist" & "author" fields
 		return HTTP.getJSON(DEFAULT_DOMAIN_NAME + "/manga/" + id + "?includes[]=cover_art");
 	}
 
-	static String getChapterImages(String id)
+	String getChapterImages(String id)
 		throws HTTPException {
 		return HTTP.getJSON(DEFAULT_DOMAIN_NAME + "/at-home/server/" + id);
 	}
 
-	static String getChapters(String id, int offset)
+	String getChapters(String id, int offset)
 		throws HTTPException {
 		return HTTP.getJSON(
 			DEFAULT_DOMAIN_NAME +
@@ -47,7 +50,7 @@ public class MangaDex {
 		);
 	}
 
-	public static ArrayList<Serie> searchManga(Context ctx, String name)
+	public ArrayList<Serie> searchManga(String name)
 		throws JSONException, HTTPException, URISyntaxException, UnsupportedEncodingException
 	{
 		ArrayList<Serie> output = null;
@@ -70,12 +73,12 @@ public class MangaDex {
 		JSONArray data = resp.getJSONArray("data");
 		output = new ArrayList<Serie>(data.length());
 		for(int i = 0; i < data.length(); i ++)
-			output.add(parseSerie(ctx, data.getJSONObject(i)));
+			output.add(parseSerie(data.getJSONObject(i)));
 
 		return output;
 	}
 
-	static void parseAndAppendChapter(int manga_db_idx, JSONObject chapter)
+	void parseAndAppendChapter(int manga_db_idx, JSONObject chapter)
 		throws JSONException {
 		JSONObject attrs = chapter.getJSONObject("attributes");
 
@@ -111,13 +114,12 @@ public class MangaDex {
 		);
 	}
 
-	public static void loadChapters(String id)
+	public void loadChapters(Serie s)
 		throws HTTPException {
 		Database db = Database.getInstance();
 
-		Serie s = db.getOneSerie("attribute = '"+id+"' AND source='mangadex'", "id ASC");
 		if(s == null) {
-			Log.e(TAG, "Could not find a manga with following id in db: " + id);
+			Log.e(TAG, "Could not find a manga with following id in db: " + s.attribute);
 			return;
 		}
 		int manga_db_idx = s.id;
@@ -126,7 +128,7 @@ public class MangaDex {
 		
 		Log.i(TAG, "Downloading chapters of " + s.id + " \"" + s.title + "\"");
 		while(true) {
-			String resp = MangaDex.getChapters(id, offset);
+			String resp = this.getChapters(s.attribute, offset);
 			
 			try {
 				JSONTokener tokener = new JSONTokener(resp);
@@ -138,7 +140,7 @@ public class MangaDex {
 						Log.i(TAG, "Downloading chapter " + i);
 						parseAndAppendChapter(manga_db_idx, chapter);
 					} catch(JSONException e) {
-						Log.e(TAG, "Could not parse a chapter output for " + id + " n " + i, e);
+						Log.e(TAG, "Could not parse a chapter output for " + s.attribute + " n " + i, e);
 					}
 				}
 
@@ -147,7 +149,7 @@ public class MangaDex {
 				if(chapters.length() == 0)
 					break;
 			} catch(JSONException e) {
-				Log.e(TAG, "Could not parse all the chapters output for " + id, e);
+				Log.e(TAG, "Could not parse all the chapters output for " + s.attribute, e);
 				retry ++;
 				if(retry >= MAX_RETRIES)
 					break;
@@ -155,25 +157,39 @@ public class MangaDex {
 		}
 	}
 
-	static Serie parseSerie(Context ctx, JSONObject manga) 
+	String getTitleFromAttributes(JSONObject titles) {
+		final String languages[] = {"en", "jp", "fr"};
+		String title = null;
+		for(String lang : languages) {
+			try {
+				title = titles.getString(lang);
+			} catch(JSONException e) {}
+
+			if(title != null)
+				return title;
+		}
+		return null;
+	}
+
+	Serie parseSerie(JSONObject manga) 
 		throws JSONException
 	{
-		JSONObject titles = manga.getJSONObject("attributes").getJSONObject("title");
+		JSONObject attributes = manga.getJSONObject("attributes");
 		String id = manga.getString("id");
+		
 		String title = null;
+		if(attributes.has("title"))
+			title = getTitleFromAttributes(attributes.getJSONObject("title"));
 
-		try {
-			if(title == null)
-				title = titles.getString("en");
-		} catch(JSONException e) {}
-		try {
-			if(title == null)
-				title = titles.getString("jp");
-		} catch(JSONException e) {}
-		try {
-			if(title == null)
-				title = titles.getString("fr");
-		} catch(JSONException e) {}
+		if(attributes.has("altTitles")) {
+			JSONArray titles = attributes.getJSONArray("altTitles");
+			for(int i = 0; i < titles.length(); i ++) {
+				if(title != null)
+					break;
+
+				title = getTitleFromAttributes(titles.getJSONObject(i));
+			}
+		}
 
 		String cover_filename = null;
 		JSONArray relationships = manga.getJSONArray("relationships");
@@ -194,8 +210,7 @@ public class MangaDex {
 		if(cover_filename != null) {
 			try {
 				Log.i(TAG, "Loading cover");
-				cover_image_id = HTTP.downloadFileAndAddToDatabase(ctx,
-					cover_filename,
+				cover_image_id = HTTP.downloadFileAndAddToDatabase(cover_filename,
 					"https://uploads.mangadex.org/covers/"
 					+ id + "/" + cover_filename + ".256.jpg"
 				);
@@ -214,26 +229,26 @@ public class MangaDex {
 		);
 	}
 
-	public static Serie findOrAddManga(Context ctx, String id)
+	public Serie findOrAddManga(String id)
 		throws JSONException, HTTPException {
 		Serie output = Database.getInstance()
-			.getOneSerie("attribute = '"+id+"' AND source='mangadex'", "id ASC");
+			.getOneSerie("attribute = '"+id+"' AND source='"+this.name+"'", "id ASC");
 		
 		if(output != null)
 			return output;
 		
-		String resp = MangaDex.getInfos(id);
+		String resp = this.getInfos(id);
 		JSONTokener tokener = new JSONTokener(resp);
 		JSONObject manga = new JSONObject(tokener).getJSONObject("data");
 
-		output = parseSerie(ctx, manga);
+		output = parseSerie(manga);
 		Database.getInstance().addSerie(output);
-		MangaDex.loadChapters(id);
+		this.loadChapters(output);
 
 		return output;
 	}
 
-	public static void downloadChapter(Context ctx, Chapter c)
+	public void downloadChapter(Chapter c)
 		throws HTTPException
 	{
 		Log.i(TAG, "Downloading a chapter: " + c.title + "(" + c.id + "," + c.custom_attributes + ")");
@@ -254,8 +269,7 @@ public class MangaDex {
 			for(int i = 0; i < pages.length(); i ++) {
 				String filename = pages.getString(i);
 				Log.i(TAG, "Loading page " + (i+1) + "/" + pages.length() + ": " + filename);
-				long file_idx = HTTP.downloadFileAndAddToDatabase(ctx,
-					filename,
+				long file_idx = HTTP.downloadFileAndAddToDatabase(filename,
 					base_url + path_to_use + chapter_hash + "/" + filename
 				);
 

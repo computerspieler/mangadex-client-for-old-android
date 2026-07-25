@@ -11,7 +11,7 @@ public class ISO8601DateParser {
 
     static final Pattern REGEX;
     static {
-        //AAAA-MM-JJTHH:MM:SS,ss-/+FF:ff
+        //YYYY-MM-DDTHH:MM:SS,ss-/+FF:ff
         REGEX = Pattern.compile(
             // Date
             "(\\d{4})-(\\d{2})-(\\d{2})" +

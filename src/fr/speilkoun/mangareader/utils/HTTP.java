@@ -1,6 +1,5 @@
 package fr.speilkoun.mangareader.utils;
 
-import android.content.Context;
 import android.util.Log;
 import fr.speilkoun.mangareader.data.Database;
 
@@ -19,14 +18,13 @@ public class HTTP {
         throws HTTPException;
 
     public static long downloadFileAndAddToDatabase(
-        Context ctx,
         String filename,
         String url
     )
         throws HTTPException
     {
         Database db = Database.getInstance();
-        String output_path = ctx.getFileStreamPath(filename).getAbsolutePath();
+        String output_path = db.getFileFullPath(filename);
         Log.i(TAG, "Looking for " + output_path);
         Long idx = db.findFile(output_path);
         
